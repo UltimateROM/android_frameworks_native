@@ -15,6 +15,7 @@
  */
 
 #define ATRACE_TAG ATRACE_TAG_GRAPHICS
+#define WORKAROUND_BUG_10194508
 
 #include <ctype.h>
 #include <dlfcn.h>
@@ -615,6 +616,14 @@ void getNativePixelFormat(EGLDisplay dpy, egl_connection_t* cnx, EGLConfig confi
     EGLint componentType = EGL_COLOR_COMPONENT_TYPE_FIXED_EXT;
     cnx->egl.eglGetConfigAttrib(dpy, config, EGL_COLOR_COMPONENT_TYPE_EXT, &componentType);
 
+#if WORKAROUND_BUG_10194508
+    if (!cnx->egl.eglGetConfigAttrib(dpy, config, EGL_NATIVE_VISUAL_ID,
+            &format)) {
+        ALOGE("eglGetConfigAttrib(EGL_NATIVE_VISUAL_ID) failed: %#x",
+                eglGetError());
+        format = 0;
+    }
+#else
     EGLint a = 0;
     EGLint r, g, b;
     r = g = b = 0;
@@ -662,6 +671,7 @@ void getNativePixelFormat(EGLDisplay dpy, egl_connection_t* cnx, EGLConfig confi
             format = HAL_PIXEL_FORMAT_RGBA_FP16;
         }
     }
+#endif
 }
 
 EGLSurface eglCreateWindowSurface(  EGLDisplay dpy, EGLConfig config,
