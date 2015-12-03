@@ -204,6 +204,7 @@ static void release_object(const sp<ProcessState>& proc,
         }
         case BINDER_TYPE_FD: {
             if (obj.cookie != 0) { // owned
+#ifndef DISABLE_ASHMEM_TRACKING
                 if (outAshmemSize != NULL) {
                     struct stat st;
                     int ret = fstat(obj.handle, &st);
@@ -214,7 +215,9 @@ static void release_object(const sp<ProcessState>& proc,
                         }
                     }
                 }
-
+#else
+                (void*)outAshmemSize;
+#endif
                 close(obj.handle);
             }
             return;
@@ -566,7 +569,11 @@ status_t Parcel::appendFrom(const Parcel *parcel, size_t offset, size_t len)
 
             flat_binder_object* flat
                 = reinterpret_cast<flat_binder_object*>(mData + off);
+#ifndef DISABLE_ASHMEM_TRACKING
             acquire_object(proc, *flat, this, &mOpenAshmemSize);
+#else
+            acquire_object(proc, *flat, this);
+#endif
 
             if (flat->type == BINDER_TYPE_FD) {
                 // If this is a file descriptor, we need to dup it so the
@@ -1222,7 +1229,6 @@ status_t Parcel::writeBlob(size_t len, bool mutableCopy, WritableBlob* outBlob)
     ALOGV("writeBlob: write to ashmem");
     int fd = ashmem_create_region("Parcel Blob", len);
     if (fd < 0) return NO_MEMORY;
-
     int result = ashmem_set_prot_region(fd, PROT_READ | PROT_WRITE);
     if (result < 0) {
         status = result;
@@ -1331,7 +1337,11 @@ restart_write:
         // Need to write meta-data?
         if (nullMetaData || val.binder != 0) {
             mObjects[mObjectsSize] = mDataPos;
+#ifndef DISABLE_ASHMEM_TRACKING
             acquire_object(ProcessState::self(), val, this, &mOpenAshmemSize);
+#else
+            acquire_object(ProcessState::self(), val, this);
+#endif
             mObjectsSize++;
         }
 
@@ -2255,7 +2265,11 @@ void Parcel::releaseObjects()
         i--;
         const flat_binder_object* flat
             = reinterpret_cast<flat_binder_object*>(data+objects[i]);
+#ifndef DISABLE_ASHMEM_TRACKING
         release_object(proc, *flat, this, &mOpenAshmemSize);
+#else
+        release_object(proc, *flat, this);
+#endif
     }
 }
 
@@ -2269,7 +2283,11 @@ void Parcel::acquireObjects()
         i--;
         const flat_binder_object* flat
             = reinterpret_cast<flat_binder_object*>(data+objects[i]);
+#ifndef DISABLE_ASHMEM_TRACKING
         acquire_object(proc, *flat, this, &mOpenAshmemSize);
+#else
+        acquire_object(proc, *flat, this);
+#endif
     }
 }
 
@@ -2460,7 +2478,11 @@ status_t Parcel::continueWrite(size_t desired)
                     // will need to rescan because we may have lopped off the only FDs
                     mFdsKnown = false;
                 }
+#ifndef DISABLE_ASHMEM_TRACKING
                 release_object(proc, *flat, this, &mOpenAshmemSize);
+#else
+                release_object(proc, *flat, this);
+#endif
             }
             binder_size_t* objects =
                 (binder_size_t*)realloc(mObjects, objectsSize*sizeof(binder_size_t));
@@ -2545,7 +2567,9 @@ void Parcel::initState()
     mFdsKnown = true;
     mAllowFds = true;
     mOwner = NULL;
+#ifndef DISABLE_ASHMEM_TRACKING
     mOpenAshmemSize = 0;
+#endif
 }
 
 void Parcel::scanForFds() const
@@ -2568,12 +2592,20 @@ size_t Parcel::getBlobAshmemSize() const
     // This used to return the size of all blobs that were written to ashmem, now we're returning
     // the ashmem currently referenced by this Parcel, which should be equivalent.
     // TODO: Remove method once ABI can be changed.
+#ifndef DISABLE_ASHMEM_TRACKING
     return mOpenAshmemSize;
+#else
+    return 0;
+#endif
 }
 
 size_t Parcel::getOpenAshmemSize() const
 {
+#ifndef DISABLE_ASHMEM_TRACKING
     return mOpenAshmemSize;
+#else
+    return 0;
+#endif
 }
 
 // --- Parcel::Blob ---
