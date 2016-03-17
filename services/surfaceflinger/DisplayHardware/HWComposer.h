@@ -32,6 +32,8 @@
 #include <utils/Timers.h>
 #include <utils/Vector.h>
 
+#define MAX_LAYER_COUNT 32
+
 extern "C" int clock_nanosleep(clockid_t clock_id, int flags,
                            const struct timespec *request,
                            struct timespec *remain);
@@ -74,7 +76,7 @@ public:
             const sp<SurfaceFlinger>& flinger,
             EventHandler& handler);
 
-    virtual ~HWComposer();
+    ~HWComposer();
 
     status_t initCheck() const;
 
@@ -120,12 +122,19 @@ public:
     // does this display have layers handled by GLES
     bool hasGlesComposition(int32_t id) const;
 
-    // does this display support dim layer composition
-    bool hasDimComposition() const { return (mDimComp == 1); }
+#ifdef QCOM_BSP
+    // does this display have layers handled by BLIT HW
+    bool hasBlitComposition(int32_t id) const;
 
+    //GPUTiledRect : function to find out if DR can be used in GPU Comp.
+    bool canUseTiledDR(int32_t id, Rect& dr);
+#endif
     // get the releaseFence file descriptor for a display's framebuffer layer.
     // the release fence is only valid after commit()
     sp<Fence> getAndResetReleaseFence(int32_t id);
+
+    // is VDS solution enabled
+    inline bool isVDSEnabled() const { return mVDSEnabled; };
 
     // needed forward declarations
     class LayerListIterator;
@@ -168,20 +177,29 @@ public:
         virtual sp<Fence> getAndResetReleaseFence() = 0;
         virtual void setDefaultState() = 0;
         virtual void setSkip(bool skip) = 0;
-        virtual void setDim() = 0;
+/*
+#ifndef TARGET_NEEDS_HWC_V0
         virtual void setIsCursorLayerHint(bool isCursor = true) = 0;
+        virtual void setAnimating(bool animating) = 0;
+#endif
+*/
         virtual void setBlending(uint32_t blending) = 0;
         virtual void setTransform(uint32_t transform) = 0;
         virtual void setFrame(const Rect& frame) = 0;
         virtual void setCrop(const FloatRect& crop) = 0;
         virtual void setVisibleRegionScreen(const Region& reg) = 0;
-        virtual void setSurfaceDamage(const Region& reg) = 0;
+/*
+#ifndef TARGET_NEEDS_HWC_V0
         virtual void setSidebandStream(const sp<NativeHandle>& stream) = 0;
+#endif
+#ifdef QCOM_BSP
+        virtual void setDirtyRect(const Rect& dirtyRect) = 0;
+#endif
+*/
         virtual void setBuffer(const sp<GraphicBuffer>& buffer) = 0;
         virtual void setAcquireFenceFd(int fenceFd) = 0;
         virtual void setPlaneAlpha(uint8_t alpha) = 0;
         virtual void onDisplayed() = 0;
-        virtual void setAnimating(bool animating)= 0;
     };
 
     /*
@@ -254,7 +272,8 @@ public:
     // Events handling ---------------------------------------------------------
 
     enum {
-        EVENT_VSYNC = HWC_EVENT_VSYNC
+        EVENT_VSYNC = HWC_EVENT_VSYNC,
+        EVENT_ORIENTATION = HWC_EVENT_ORIENTATION
     };
 
     void eventControl(int disp, int event, int enabled);
@@ -264,8 +283,10 @@ public:
         uint32_t height;
         float xdpi;
         float ydpi;
+#ifdef QCOM_BSP
+        bool secure;
+#endif
         nsecs_t refresh;
-        int colorTransform;
     };
 
     // Query display parameters.  Pass in a display index (e.g.
@@ -274,6 +295,9 @@ public:
     sp<Fence> getDisplayFence(int disp) const;
     uint32_t getFormat(int disp) const;
     bool isConnected(int disp) const;
+#ifdef QCOM_BSP
+    bool isSecure(int disp) const;
+#endif
 
     // These return the values for the current config of a given display index.
     // To get the values for all configs, use getConfigs below.
@@ -310,14 +334,6 @@ public:
 
     // for debugging ----------------------------------------------------------
     void dump(String8& out) const;
-
-    /* ------------------------------------------------------------------------
-     * Extensions
-     */
-    virtual inline bool isVDSEnabled() const { return true; };
-    virtual inline bool isCompositionTypeBlit(const int32_t /*compType*/) const {
-            return false;
-    };
 
 private:
     void loadHwcModule();
@@ -372,8 +388,6 @@ private:
     // mLists[i>0] can be NULL. that display is to be ignored
     struct hwc_display_contents_1*  mLists[MAX_HWC_DISPLAYS];
     DisplayData                     mDisplayData[MAX_HWC_DISPLAYS];
-    // protect mDisplayData from races between prepare and dump
-    mutable Mutex mDisplayLock;
     size_t                          mNumDisplays;
 
     cb_context*                     mCBContext;
@@ -382,9 +396,11 @@ private:
     sp<VSyncThread>                 mVSyncThread;
     bool                            mDebugForceFakeVSync;
     BitSet32                        mAllocatedDisplayIDs;
-
+    bool                            mVDSEnabled;
     // protected by mLock
     mutable Mutex mLock;
+    // synchronization between Draw call and Dumpsys call
+    mutable Mutex mDrawLock;
     mutable nsecs_t mLastHwVSync[HWC_NUM_PHYSICAL_DISPLAY_TYPES];
 
     // thread-safe

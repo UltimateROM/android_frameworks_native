@@ -63,9 +63,11 @@ void LayerDim::setPerFrameData(const sp<const DisplayDevice>& hw,
   HWComposer& hwc = mFlinger->getHwComposer();
 
   Layer::setPerFrameData(hw, layer);
+#ifndef TARGET_NEEDS_HWC_V0
   if (hwc.hasDimComposition()) {
     layer.setDim();
   }
+#endif
 }
 
 // ---------------------------------------------------------------------------
