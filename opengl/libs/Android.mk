@@ -28,7 +28,7 @@ LOCAL_SRC_FILES:= 	       \
 	EGL/egl.cpp 	       \
 	EGL/eglApi.cpp 	       \
 	EGL/trace.cpp              \
-	EGL/getProcAddress.cpp.arm \
+	EGL/getProcAddress.cpp \
 	EGL/Loader.cpp 	       \
 #
 
@@ -43,6 +43,9 @@ LOCAL_CFLAGS += -DLOG_TAG=\"libEGL\"
 LOCAL_CFLAGS += -DGL_GLEXT_PROTOTYPES -DEGL_EGLEXT_PROTOTYPES
 LOCAL_CFLAGS += -fvisibility=hidden
 LOCAL_CFLAGS += -DEGL_TRACE=1
+
+LOCAL_ARM_MODE := arm
+
 
 ifeq ($(BOARD_ALLOW_EGL_HIBERNATION),true)
   LOCAL_CFLAGS += -DBOARD_ALLOW_EGL_HIBERNATION
