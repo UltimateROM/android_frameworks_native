@@ -12,11 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+#WITH_CLANG=true
+
 LOCAL_PATH := $(call my-dir)
 include $(CLEAR_VARS)
 
 LOCAL_CLANG := true
-LOCAL_CPPFLAGS := -std=c++1y -Weverything
+LOCAL_CPPFLAGS := -std=c++1y
 
 # The static constructors and destructors in this library have not been noted to
 # introduce significant overheads
