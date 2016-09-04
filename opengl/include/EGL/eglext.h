@@ -321,6 +321,21 @@ typedef EGLBoolean (EGLAPIENTRYP PFNEGLQUERYSURFACEPOINTERANGLEPROC) (EGLDisplay
 #define EGL_COVERAGE_SAMPLE_RESOLVE_NONE_NV	0x3133
 #endif
 
+#if KHRONOS_SUPPORT_INT64   /* EGLuint64NV requires 64-bit uint support */
+#ifndef STE_HARDWARE
+#ifndef EGL_NV_system_time
+#define EGL_NV_system_time 1
+typedef khronos_utime_nanoseconds_t EGLuint64NV;
+#ifdef EGL_EGLEXT_PROTOTYPES
+EGLAPI EGLuint64NV EGLAPIENTRY eglGetSystemTimeFrequencyNV(void);
+EGLAPI EGLuint64NV EGLAPIENTRY eglGetSystemTimeNV(void);
+#endif /* EGL_EGLEXT_PROTOTYPES */
+typedef EGLuint64NV (EGLAPIENTRYP PFNEGLGETSYSTEMTIMEFREQUENCYNVPROC) (void);
+typedef EGLuint64NV (EGLAPIENTRYP PFNEGLGETSYSTEMTIMENVPROC) (void);
+#endif
+#endif
+#endif
+
 #if KHRONOS_SUPPORT_INT64 /* EGLuint64KHR requires 64-bit uint support */
 #ifndef EGL_KHR_stream
 #define EGL_KHR_stream 1

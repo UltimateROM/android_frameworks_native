@@ -157,6 +157,13 @@ static const extention_map_t sExtensionMap[] = {
     { "eglGetSyncAttribKHR",
             (__eglMustCastToProperFunctionPointerType)&eglGetSyncAttribKHR },
 
+#ifndef STE_HARDWARE
+    // EGL_NV_system_time
+    { "eglGetSystemTimeFrequencyNV",
+            (__eglMustCastToProperFunctionPointerType)&eglGetSystemTimeFrequencyNV },
+    { "eglGetSystemTimeNV",
+            (__eglMustCastToProperFunctionPointerType)&eglGetSystemTimeNV },
+#endif
 
     // EGL_KHR_wait_sync
     { "eglWaitSyncKHR",
@@ -1871,6 +1878,47 @@ EGLClientBuffer eglCreateNativeClientBufferANDROID(const EGLint *attrib_list)
             gBuffer, width, height, format, usage);
     return static_cast<EGLClientBuffer>(gBuffer->getNativeBuffer());
 }
+
+// ----------------------------------------------------------------------------
+// NVIDIA extensions
+// ----------------------------------------------------------------------------
+#ifndef STE_HARDWARE
+EGLuint64NV eglGetSystemTimeFrequencyNV()
+{
+    clearError();
+
+    if (egl_init_drivers() == EGL_FALSE) {
+        return setError(EGL_BAD_PARAMETER, EGL_FALSE);
+    }
+
+    EGLuint64NV ret = 0;
+    egl_connection_t* const cnx = &gEGLImpl;
+
+    if (cnx->dso && cnx->egl.eglGetSystemTimeFrequencyNV) {
+        return cnx->egl.eglGetSystemTimeFrequencyNV();
+    }
+
+    return setErrorQuiet(EGL_BAD_DISPLAY, 0);
+}
+
+EGLuint64NV eglGetSystemTimeNV()
+{
+    clearError();
+
+    if (egl_init_drivers() == EGL_FALSE) {
+        return setError(EGL_BAD_PARAMETER, EGL_FALSE);
+    }
+
+    EGLuint64NV ret = 0;
+    egl_connection_t* const cnx = &gEGLImpl;
+
+    if (cnx->dso && cnx->egl.eglGetSystemTimeNV) {
+        return cnx->egl.eglGetSystemTimeNV();
+    }
+
+    return setErrorQuiet(EGL_BAD_DISPLAY, 0);
+}
+#endif
 
 // ----------------------------------------------------------------------------
 // Partial update extension
