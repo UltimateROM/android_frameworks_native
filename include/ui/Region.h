@@ -25,9 +25,7 @@
 #include <ui/Rect.h>
 #include <utils/Flattenable.h>
 
-#ifdef STE_HARDWARE
 #include <hardware/copybit.h>
-#endif
 
 namespace android {
 // ---------------------------------------------------------------------------
@@ -215,7 +213,6 @@ Region& Region::operator += (const Point& pt) {
     return translateSelf(pt.x, pt.y);
 }
 // ---------------------------------------------------------------------------
-#ifdef STE_HARDWARE
 struct region_iterator : public copybit_region_t {
     region_iterator(const Region& region)
         : b(region.begin()), e(region.end()) {
@@ -233,7 +230,6 @@ private:
     mutable Region::const_iterator b;
     Region::const_iterator const e;
 };
-#endif
 // ---------------------------------------------------------------------------
 }; // namespace android
 

@@ -167,9 +167,7 @@ GLConsumer::GLConsumer(const sp<IGraphicBufferConsumer>& bq, uint32_t tex,
     mEglDisplay(EGL_NO_DISPLAY),
     mEglContext(EGL_NO_CONTEXT),
     mCurrentTexture(BufferQueue::INVALID_BUFFER_SLOT),
-#ifdef STE_HARDWARE
     mNextBlitSlot(0),
-#endif
     mAttached(true)
 {
     GLC_LOGV("GLConsumer");
@@ -177,7 +175,6 @@ GLConsumer::GLConsumer(const sp<IGraphicBufferConsumer>& bq, uint32_t tex,
     memcpy(mCurrentTransformMatrix, mtxIdentity,
             sizeof(mCurrentTransformMatrix));
 
-#ifdef STE_HARDWARE
     hw_module_t const* module;
     mBlitEngine = 0;
     if (hw_get_module(COPYBIT_HARDWARE_MODULE_ID, &module) == 0) {
@@ -190,7 +187,6 @@ GLConsumer::GLConsumer(const sp<IGraphicBufferConsumer>& bq, uint32_t tex,
     if (mGraphicBufferAlloc == 0) {
         GLC_LOGE("createGraphicBufferAlloc() failed in SurfaceTexture()");
     }
-#endif
 
     mConsumer->setConsumerUsageBits(DEFAULT_USAGE_FLAGS);
 }
@@ -213,9 +209,7 @@ GLConsumer::GLConsumer(const sp<IGraphicBufferConsumer>& bq, uint32_t texTarget,
     mEglDisplay(EGL_NO_DISPLAY),
     mEglContext(EGL_NO_CONTEXT),
     mCurrentTexture(BufferQueue::INVALID_BUFFER_SLOT),
-#ifdef STE_HARDWARE
     mNextBlitSlot(0),
-#endif
     mAttached(false)
 {
     GLC_LOGV("GLConsumer");
@@ -223,7 +217,6 @@ GLConsumer::GLConsumer(const sp<IGraphicBufferConsumer>& bq, uint32_t texTarget,
     memcpy(mCurrentTransformMatrix, mtxIdentity,
             sizeof(mCurrentTransformMatrix));
 
-#ifdef STE_HARDWARE
     hw_module_t const* module;
     mBlitEngine = 0;
     if (hw_get_module(COPYBIT_HARDWARE_MODULE_ID, &module) == 0) {
@@ -236,12 +229,10 @@ GLConsumer::GLConsumer(const sp<IGraphicBufferConsumer>& bq, uint32_t texTarget,
     if (mGraphicBufferAlloc == 0) {
         GLC_LOGE("createGraphicBufferAlloc() failed in SurfaceTexture()");
     }
-#endif
 
     mConsumer->setConsumerUsageBits(DEFAULT_USAGE_FLAGS);
 }
 
-#ifdef STE_HARDWARE
 GLConsumer::~GLConsumer() {
     GLC_LOGV("~GLConsumer");
     abandon();
@@ -250,7 +241,6 @@ GLConsumer::~GLConsumer() {
         copybit_close(mBlitEngine);
     }
 }
-#endif
 
 status_t GLConsumer::setDefaultBufferSize(uint32_t w, uint32_t h)
 {
@@ -443,7 +433,6 @@ status_t GLConsumer::releaseBufferLocked(int buf,
     return err;
 }
 
-#ifdef STE_HARDWARE
 bool GLConsumer::stillTracking(int slot,
         const sp<GraphicBuffer> graphicBuffer) {
     if (slot < 0 || slot >= BufferQueue::NUM_BUFFER_SLOTS) {
@@ -459,7 +448,6 @@ bool GLConsumer::stillTracking(int slot,
             (mBlitSlots[0] != NULL && mBlitSlots[0]->handle == graphicBuffer->handle) ||
             (mBlitSlots[1] != NULL && mBlitSlots[1]->handle == graphicBuffer->handle));
 }
-#endif
 
 status_t GLConsumer::updateAndReleaseLocked(const BufferItem& item,
         PendingRelease* pendingRelease)
@@ -484,7 +472,6 @@ status_t GLConsumer::updateAndReleaseLocked(const BufferItem& item,
         return err;
     }
 
-#ifdef STE_HARDWARE
     sp<GraphicBuffer> textureBuffer;
     if (mSlots[slot].mGraphicBuffer->getPixelFormat() == HAL_PIXEL_FORMAT_YCBCR42XMBN
      || mSlots[slot].mGraphicBuffer->getPixelFormat() == HAL_PIXEL_FORMAT_YCbCr_420_P) {
@@ -536,7 +523,6 @@ status_t GLConsumer::updateAndReleaseLocked(const BufferItem& item,
         mEglSlots[slot].mEglImage = new EglImage(textureBuffer);
         mNextBlitSlot = (mNextBlitSlot + 1) % BufferQueue::NUM_BLIT_BUFFER_SLOTS;
     } 
-#endif
 
     // Ensure we have a valid EglImageKHR for the slot, creating an EglImage
     // if nessessary, for the gralloc buffer currently in the slot in
@@ -1248,7 +1234,6 @@ void GLConsumer::dumpLocked(String8& result, const char* prefix) const
     ConsumerBase::dumpLocked(result, prefix);
 }
 
-#ifdef STE_HARDWARE
 status_t GLConsumer::convert(sp<GraphicBuffer> &srcBuf, sp<GraphicBuffer> &dstBuf) {
 
     /* For some reason mBlitEngine is not being initialized in
@@ -1299,7 +1284,6 @@ status_t GLConsumer::convert(sp<GraphicBuffer> &srcBuf, sp<GraphicBuffer> &dstBu
     }
     return OK;
 }
-#endif
 
 static void mtxMul(float out[16], const float a[16], const float b[16]) {
     out[0] = a[0]*b[0] + a[4]*b[1] + a[8]*b[2] + a[12]*b[3];
