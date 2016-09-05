@@ -31,6 +31,7 @@
 
 #include <stdint.h>
 #include <sys/types.h>
+#include <cutils/properties.h>
 
 #include "Layer.h"
 #include "SurfaceFlinger.h"
