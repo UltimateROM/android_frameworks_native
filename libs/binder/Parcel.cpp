@@ -377,6 +377,8 @@ status_t unflatten_binder(const sp<ProcessState>& proc,
 
 // ---------------------------------------------------------------------------
 
+extern "C" status_t _ZN7android6Parcel13writeString16EPKtj() __attribute__((alias("_ZN7android6Parcel13writeString16EPKDsj")));
+
 Parcel::Parcel()
 {
     LOG_ALLOC("Parcel %p: constructing", this);
