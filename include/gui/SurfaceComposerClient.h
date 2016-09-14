@@ -92,6 +92,14 @@ public:
     static ssize_t getDisplayOrientation(int32_t displayId);
 #endif
 
+    static status_t getDisplayInfo(int32_t displayId, DisplayInfo* info);
+
+#if defined(ICS_CAMERA_BLOB) || defined(MR0_CAMERA_BLOB)
+    static ssize_t getDisplayWidth(int32_t displayId);
+    static ssize_t getDisplayHeight(int32_t displayId);
+    static ssize_t getDisplayOrientation(int32_t displayId);
+#endif
+
     // ------------------------------------------------------------------------
     // surface creation / destruction
 
@@ -130,6 +138,8 @@ public:
 #if defined(MR0_CAMERA_BLOB)
     static int setOrientation(int32_t dpy, int orientation, uint32_t flags);
 #endif
+
+    static int setOrientation(int32_t dpy, int orientation, uint32_t flags);
 
     //! Flag the currently open transaction as an animation transaction.
     static void setAnimationTransaction();

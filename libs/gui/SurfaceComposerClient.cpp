@@ -435,6 +435,15 @@ status_t Composer::setCrop(const sp<SurfaceComposerClient>& client,
     return NO_ERROR;
 }
 
+status_t Composer::setOrientation(int orientation) {
+    sp<ISurfaceComposer> sm(ComposerService::getComposerService());
+    sp<IBinder> token(sm->getBuiltInDisplay(ISurfaceComposer::eDisplayIdMain));
+    DisplayState& s(getDisplayStateLocked(token));
+    s.orientation = orientation;
+    mForceSynchronous = true; // TODO: do we actually still need this?
+    return NO_ERROR;
+}
+
 // ---------------------------------------------------------------------------
 
 DisplayState& Composer::getDisplayStateLocked(const sp<IBinder>& token) {
@@ -631,6 +640,11 @@ inline Composer& SurfaceComposerClient::getComposer() {
     return mComposer;
 }
 
+status_t SurfaceComposerClient::setOrientation(int32_t dpy, int orientation, uint32_t flags)
+{
+    return Composer::getInstance().setOrientation(orientation);
+}
+
 // ----------------------------------------------------------------------------
 
 void SurfaceComposerClient::openGlobalTransaction() {
@@ -745,6 +759,32 @@ void SurfaceComposerClient::setDisplaySize(const sp<IBinder>& token,
         uint32_t width, uint32_t height) {
     Composer::getInstance().setDisplaySize(token, width, height);
 }
+
+status_t SurfaceComposerClient::getDisplayInfo(
+        int32_t displayId, DisplayInfo* info)
+{
+    return getDisplayInfo(getBuiltInDisplay(displayId), info);
+}
+
+#if defined(ICS_CAMERA_BLOB) || defined(MR0_CAMERA_BLOB)
+ssize_t SurfaceComposerClient::getDisplayWidth(int32_t displayId) {
+    DisplayInfo info;
+    getDisplayInfo(getBuiltInDisplay(displayId), &info);
+    return info.w;
+}
+
+ssize_t SurfaceComposerClient::getDisplayHeight(int32_t displayId) {
+    DisplayInfo info;
+    getDisplayInfo(getBuiltInDisplay(displayId), &info);
+    return info.h;
+}
+
+ssize_t SurfaceComposerClient::getDisplayOrientation(int32_t displayId) {
+    DisplayInfo info;
+    getDisplayInfo(getBuiltInDisplay(displayId), &info);
+    return info.orientation;
+}
+#endif
 
 // ----------------------------------------------------------------------------
 
