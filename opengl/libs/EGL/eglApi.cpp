@@ -168,11 +168,13 @@ static const extention_map_t sExtensionMap[] = {
     { "eglGetSyncAttribKHR",
             (__eglMustCastToProperFunctionPointerType)&eglGetSyncAttribKHR },
 
+#ifndef STE_HARDWARE
     // EGL_NV_system_time
     { "eglGetSystemTimeFrequencyNV",
             (__eglMustCastToProperFunctionPointerType)&eglGetSystemTimeFrequencyNV },
     { "eglGetSystemTimeNV",
             (__eglMustCastToProperFunctionPointerType)&eglGetSystemTimeNV },
+#endif
 
     // EGL_KHR_wait_sync
     { "eglWaitSyncKHR",
@@ -1976,6 +1978,7 @@ error_condition:
 // ----------------------------------------------------------------------------
 // NVIDIA extensions
 // ----------------------------------------------------------------------------
+#ifndef STE_HARDWARE
 EGLuint64NV eglGetSystemTimeFrequencyNV()
 {
     clearError();
@@ -2011,6 +2014,7 @@ EGLuint64NV eglGetSystemTimeNV()
 
     return setErrorQuiet(EGL_BAD_DISPLAY, 0);
 }
+#endif
 
 // ----------------------------------------------------------------------------
 // Partial update extension
