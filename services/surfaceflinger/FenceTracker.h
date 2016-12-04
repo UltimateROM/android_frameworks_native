@@ -44,7 +44,11 @@ public:
              FrameTimestamps* outTimestamps);
 
 protected:
+#ifdef ENABLE_FENCE_TRACKING
      static constexpr size_t MAX_FRAME_HISTORY = 8;
+#else
+     static constexpr size_t MAX_FRAME_HISTORY = 128;
+#endif
 
      struct LayerRecord {
          String8 name; // layer name
