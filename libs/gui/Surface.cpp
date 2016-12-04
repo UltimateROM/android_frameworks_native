@@ -294,10 +294,14 @@ int Surface::dequeueBuffer(android_native_buffer_t** buffer, int* fenceFd) {
 
     int buf = -1;
     sp<Fence> fence;
+#ifndef LAST_DEQUEUE_DURATION_OFF
     nsecs_t now = systemTime();
+#endif
     status_t result = mGraphicBufferProducer->dequeueBuffer(&buf, &fence,
             reqWidth, reqHeight, reqFormat, reqUsage);
+#ifndef LAST_DEQUEUE_DURATION_OFF
     mLastDequeueDuration = systemTime() - now;
+#endif
 
     if (result < 0) {
         ALOGV("dequeueBuffer: IGraphicBufferProducer::dequeueBuffer"
@@ -500,9 +504,13 @@ int Surface::queueBuffer(android_native_buffer_t* buffer, int fenceFd) {
         input.setSurfaceDamage(flippedRegion);
     }
 
+#ifndef LAST_DEQUEUE_DURATION_OFF
     nsecs_t now = systemTime();
+#endif
     status_t err = mGraphicBufferProducer->queueBuffer(i, input, &output);
+#ifndef LAST_DEQUEUE_DURATION_OFF
     mLastQueueDuration = systemTime() - now;
+#endif
     if (err != OK)  {
         ALOGE("queueBuffer: error queuing buffer to SurfaceTexture, %d", err);
     }
