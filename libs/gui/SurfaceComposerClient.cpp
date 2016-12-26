@@ -591,6 +591,15 @@ void Composer::setDisplaySize(const sp<IBinder>& token, uint32_t width, uint32_t
     s.what |= DisplayState::eDisplaySizeChanged;
 }
 
+status_t Composer::setOrientation(int orientation) {
+    sp<ISurfaceComposer> sm(ComposerService::getComposerService());
+    sp<IBinder> token(sm->getBuiltInDisplay(ISurfaceComposer::eDisplayIdMain));
+    DisplayState& s(getDisplayStateLocked(token));
+    s.orientation = orientation;
+    mForceSynchronous = true; // TODO: do we actually still need this?
+    return NO_ERROR;
+}
+
 // ---------------------------------------------------------------------------
 
 SurfaceComposerClient::SurfaceComposerClient()
@@ -815,6 +824,11 @@ status_t SurfaceComposerClient::setColor(const sp<IBinder>& id, uint32_t color) 
     return getComposer().setColor(this, id, color);
 }
 
+status_t SurfaceComposerClient::setOrientation(int32_t dpy, int orientation, uint32_t flags)
+{
+    return Composer::getInstance().setOrientation(orientation);
+}
+
 // ----------------------------------------------------------------------------
 
 status_t SurfaceComposerClient::setDisplaySurface(const sp<IBinder>& token,
@@ -906,6 +920,32 @@ status_t SurfaceComposerClient::getHdrCapabilities(const sp<IBinder>& display,
     return ComposerService::getComposerService()->getHdrCapabilities(display,
             outCapabilities);
 }
+
+status_t SurfaceComposerClient::getDisplayInfo(
+        int32_t displayId, DisplayInfo* info)
+{
+    return getDisplayInfo(getBuiltInDisplay(displayId), info);
+}
+
+#if defined(ICS_CAMERA_BLOB) || defined(MR0_CAMERA_BLOB)
+ssize_t SurfaceComposerClient::getDisplayWidth(int32_t displayId) {
+    DisplayInfo info;
+    getDisplayInfo(getBuiltInDisplay(displayId), &info);
+    return info.w;
+}
+
+ssize_t SurfaceComposerClient::getDisplayHeight(int32_t displayId) {
+    DisplayInfo info;
+    getDisplayInfo(getBuiltInDisplay(displayId), &info);
+    return info.h;
+}
+
+ssize_t SurfaceComposerClient::getDisplayOrientation(int32_t displayId) {
+    DisplayInfo info;
+    getDisplayInfo(getBuiltInDisplay(displayId), &info);
+    return info.orientation;
+}
+#endif
 
 // ----------------------------------------------------------------------------
 
