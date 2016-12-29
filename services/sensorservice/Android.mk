@@ -22,9 +22,11 @@ LOCAL_SRC_FILES:= \
 
 LOCAL_CFLAGS:= -DLOG_TAG=\"SensorService\"
 
-LOCAL_CFLAGS += -Wall -Werror -Wextra
+LOCAL_CLANG := true
 
-LOCAL_CFLAGS += -fvisibility=hidden -DSENSORS_DONT_SUPPORT_FIFO
+LOCAL_CFLAGS += -Wall -Wextra -DSENSORS_DONT_SUPPORT_FIFO
+
+LOCAL_CFLAGS += -fvisibility=hidden
 
 LOCAL_SHARED_LIBRARIES := \
     libcutils \
@@ -53,10 +55,10 @@ LOCAL_SHARED_LIBRARIES := \
     libbinder \
     libutils
 
-LOCAL_CFLAGS := -Wall -Werror -Wextra
+LOCAL_CFLAGS := -Wall -Wextra -DSENSORS_DONT_SUPPORT_FIFO
 
 LOCAL_MODULE_TAGS := optional
-
+LOCAL_CLANG := true
 LOCAL_MODULE:= sensorservice
 
 include $(BUILD_EXECUTABLE)

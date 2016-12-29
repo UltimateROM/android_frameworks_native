@@ -7,6 +7,7 @@ LOCAL_SRC_FILES:= atrace.cpp
 
 LOCAL_C_INCLUDES += external/zlib
 
+LOCAL_CLANG := true
 LOCAL_MODULE:= atrace
 
 LOCAL_MODULE_TAGS:= optional

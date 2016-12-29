@@ -15,7 +15,7 @@ ifeq ($(TARGET_OS),linux)
 	LOCAL_CFLAGS += -DXP_UNIX
 	#LOCAL_SHARED_LIBRARIES += librt
 endif
-
+LOCAL_CLANG := true
 LOCAL_MODULE:= dumpsys
 
 include $(BUILD_EXECUTABLE)
