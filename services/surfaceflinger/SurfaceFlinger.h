@@ -576,6 +576,10 @@ private:
      */
     uint32_t mActiveFrameSequence;
 
+    /*
+     * Scheduling FIFO priority
+     */
+    uint32_t mSchedFifoPrio;
 };
 
 }; // namespace android
