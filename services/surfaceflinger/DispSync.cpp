@@ -295,8 +295,18 @@ DispSync::DispSync() :
         mRefreshSkipCount(0),
         mThread(new DispSyncThread()) {
 
-    mThread->run("DispSync", PRIORITY_URGENT_DISPLAY + PRIORITY_MORE_FAVORABLE);
-    android_set_rt_ioprio(mThread->getTid(), 1);
+    pid_t pid;
+    mThread->run("DispSync", PRIORITY_REALTIME);
+    pid = mThread->getTid();
+    android_set_rt_ioprio(pid, 1);
+
+    // set DispSync to SCHED_FIFO to minimize jitter
+    struct sched_param param = {0};
+    param.sched_priority = 2;
+    int res = sched_setscheduler(pid, SCHED_FIFO, &param);
+    if (res != 0) {
+        ALOGE("Couldn't set SCHED_FIFO for DispSyncThread, %d", res);
+    }
 
     reset();
     beginResync();
