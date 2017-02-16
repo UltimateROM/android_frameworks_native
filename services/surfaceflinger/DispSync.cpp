@@ -23,6 +23,7 @@
 
 #include <cutils/iosched_policy.h>
 #include <cutils/log.h>
+#include <cutils/properties.h>
 
 #include <ui/Fence.h>
 
@@ -224,7 +225,6 @@ private:
     Vector<CallbackInvocation> gatherCallbackInvocationsLocked(nsecs_t now) {
         Vector<CallbackInvocation> callbackInvocations;
         nsecs_t ref = now - mPeriod;
-
         for (size_t i = 0; i < mEventListeners.size(); i++) {
             nsecs_t t = computeListenerNextEventTimeLocked(mEventListeners[i],
                     ref);
@@ -296,16 +296,26 @@ DispSync::DispSync() :
         mThread(new DispSyncThread()) {
 
     pid_t pid;
-    mThread->run("DispSync", PRIORITY_REALTIME);
+    if (!property_get_bool("sys.sf.dispsync.realtime", 0)) {
+	    mThread->run("DispSync", PRIORITY_URGENT_DISPLAY + PRIORITY_MORE_FAVORABLE);
+    } else {
+	    mThread->run("DispSync", PRIORITY_REALTIME);
+    }
+
+
     pid = mThread->getTid();
     android_set_rt_ioprio(pid, 1);
 
-    // set DispSync to SCHED_FIFO to minimize jitter
-    struct sched_param param = {0};
-    param.sched_priority = 2;
-    int res = sched_setscheduler(pid, SCHED_FIFO, &param);
-    if (res != 0) {
-        ALOGE("Couldn't set SCHED_FIFO for DispSyncThread, %d", res);
+    int sched_prio = property_get_int32("sys.sf.dispsync.fifo", -1);
+
+    if (sched_prio >= 0) {
+            // set DispSync to SCHED_FIFO to minimize jitter
+            struct sched_param param = {0};
+            param.sched_priority = sched_prio;
+            int res = sched_setscheduler(pid, SCHED_FIFO, &param);
+            if (res != 0) {
+		ALOGE("Couldn't set SCHED_FIFO for DispSyncThread, %d", res);
+	    }
     }
 
     reset();
