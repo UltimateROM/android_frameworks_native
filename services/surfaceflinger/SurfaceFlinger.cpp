@@ -489,7 +489,9 @@ void SurfaceFlinger::init() {
 
 	        if (sched_setscheduler(mSFEventThread->getTid(), SCHED_FIFO, &param) != 0) {
 	             ALOGE("Couldn't set SCHED_FIFO for SFEventThread");
-	        }
+	        } else {
+		     ALOGI("SF: starting with SCHED_FIFO priority %d", param.sched_priority);
+		}
 	}
     } else {
         sp<VSyncSource> vsyncSrc = new DispSyncSource(&mPrimaryDispSync,
@@ -504,7 +506,10 @@ void SurfaceFlinger::init() {
 
 	        if (sched_setscheduler(mEventThread->getTid(), SCHED_FIFO, &param) != 0) {
 	             ALOGE("Couldn't set SCHED_FIFO for SFEventThread");
-	        }
+	        } else {
+		     ALOGI("SF: starting with SCHED_FIFO priority %d", param.sched_priority);
+		}
+
 	}
     }
 

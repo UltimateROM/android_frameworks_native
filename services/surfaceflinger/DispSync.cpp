@@ -296,11 +296,15 @@ DispSync::DispSync() :
         mThread(new DispSyncThread()) {
 
     pid_t pid;
+    uint32_t prio;
     if (!property_get_bool("sys.sf.dispsync.realtime", 0)) {
-	    mThread->run("DispSync", PRIORITY_URGENT_DISPLAY + PRIORITY_MORE_FAVORABLE);
+	    prio = PRIORITY_URGENT_DISPLAY + PRIORITY_MORE_FAVORABLE;
     } else {
-	    mThread->run("DispSync", PRIORITY_REALTIME);
+	    prio = PRIORITY_REALTIME;
     }
+
+    mThread->run("DispSync", prio);
+    ALOGI("DispSync prio is %d", prio);
 
 
     pid = mThread->getTid();
@@ -315,7 +319,10 @@ DispSync::DispSync() :
             int res = sched_setscheduler(pid, SCHED_FIFO, &param);
             if (res != 0) {
 		ALOGE("Couldn't set SCHED_FIFO for DispSyncThread, %d", res);
-	    }
+	    } else {
+                ALOGI("DispSyncThread: starting with SCHED_FIFO priority %d", param.sched_priority);
+            }
+
     }
 
     reset();

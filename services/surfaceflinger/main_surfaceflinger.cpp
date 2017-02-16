@@ -63,6 +63,8 @@ int main(int, char**) {
 	    param.sched_priority = sched_prio;
 	    if (sched_setscheduler(0, SCHED_FIFO, &param) != 0) {
 	        ALOGE("Couldn't set SCHED_FIFO");
+	    } else {
+		     ALOGI("main SF: starting with SCHED_FIFO priority %d", param.sched_priority);
 	    }
     }
 
