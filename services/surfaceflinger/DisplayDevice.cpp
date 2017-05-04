@@ -30,6 +30,9 @@
 
 #include <ui/DisplayInfo.h>
 #include <ui/PixelFormat.h>
+#ifdef STE_HARDWARE
+#include <ui/FramebufferNativeWindow.h>
+#endif
 
 #include <gui/Surface.h>
 
@@ -104,8 +107,12 @@ DisplayDevice::DisplayDevice(
       mActiveConfig(0)
 {
     Surface* surface;
+#ifdef STE_HARDWARE
+    ANativeWindow* const window = new FramebufferNativeWindow();
+#else
     mNativeWindow = surface = new Surface(producer, false);
     ANativeWindow* const window = mNativeWindow.get();
+#endif
     char property[PROPERTY_VALUE_MAX];
 
     /*
@@ -512,7 +519,12 @@ void DisplayDevice::setDisplaySize(const int newWidth, const int newHeight) {
 
     mDisplaySurface->resizeBuffers(newWidth, newHeight);
 
+#ifdef STE_HARDWARE
+    ANativeWindow* const window = new FramebufferNativeWindow();
+#else
+    mNativeWindow = new Surface(producer, false);
     ANativeWindow* const window = mNativeWindow.get();
+#endif
     mSurface = eglCreateWindowSurface(mDisplay, mConfig, window, NULL);
     eglQuerySurface(mDisplay, mSurface, EGL_WIDTH,  &mDisplayWidth);
     eglQuerySurface(mDisplay, mSurface, EGL_HEIGHT, &mDisplayHeight);
@@ -626,12 +638,19 @@ void DisplayDevice::dump(String8& result) const {
     const Transform& tr(mGlobalTransform);
     result.appendFormat(
         "+ DisplayDevice: %s\n"
-        "   type=%x, hwcId=%d, layerStack=%u, (%4dx%4d), ANativeWindow=%p, orient=%2d (type=%08x), "
+        "   type=%x, hwcId=%d, layerStack=%u, (%4dx%4d)," 
+#ifndef STE_HARDWARE
+        "ANativeWindow=%p,"
+#endif 
+        "orient=%2d (type=%08x), "
         "flips=%u, isSecure=%d, powerMode=%d, activeConfig=%d, numLayers=%zu\n"
         "   v:[%d,%d,%d,%d], f:[%d,%d,%d,%d], s:[%d,%d,%d,%d],"
         "transform:[[%0.3f,%0.3f,%0.3f][%0.3f,%0.3f,%0.3f][%0.3f,%0.3f,%0.3f]]\n",
         mDisplayName.string(), mType, mHwcDisplayId,
-        mLayerStack, mDisplayWidth, mDisplayHeight, mNativeWindow.get(),
+        mLayerStack, mDisplayWidth, mDisplayHeight, 
+#ifndef STE_HARDWARE
+	mNativeWindow.get(),
+#endif
         mOrientation, tr.getType(), getPageFlipCount(),
         mIsSecure, mPowerMode, mActiveConfig,
         mVisibleLayersSortedByZ.size(),
