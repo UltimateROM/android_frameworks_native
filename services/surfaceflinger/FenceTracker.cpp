@@ -185,6 +185,10 @@ void FenceTracker::addFrame(nsecs_t refreshStartTime, sp<Fence> retireFence,
 
     mOffset = (mOffset + 1) % MAX_FRAME_HISTORY;
     mFrameCounter++;
+
+#ifndef ENABLE_FENCE_TRACKING
+    checkFencesForCompletion();
+#endif
 }
 
 bool FenceTracker::getFrameTimestamps(const Layer& layer,
