@@ -43,7 +43,7 @@ static uint64_t getUniqueId() {
 
 GraphicBuffer::GraphicBuffer()
     : BASE(), mOwner(ownData), mBufferMapper(GraphicBufferMapper::get()),
-      mInitCheck(NO_ERROR), mId(getUniqueId()), mGenerationNumber(0)
+      mInitCheck(NO_ERROR), mId(getUniqueId())
 {
     width  =
     height =
@@ -56,7 +56,7 @@ GraphicBuffer::GraphicBuffer()
 GraphicBuffer::GraphicBuffer(uint32_t inWidth, uint32_t inHeight,
         PixelFormat inFormat, uint32_t inUsage)
     : BASE(), mOwner(ownData), mBufferMapper(GraphicBufferMapper::get()),
-      mInitCheck(NO_ERROR), mId(getUniqueId()), mGenerationNumber(0)
+      mInitCheck(NO_ERROR), mId(getUniqueId())
 {
     width  =
     height =
@@ -72,7 +72,7 @@ GraphicBuffer::GraphicBuffer(uint32_t inWidth, uint32_t inHeight,
         native_handle_t* inHandle, bool keepOwnership)
     : BASE(), mOwner(keepOwnership ? ownHandle : ownNone),
       mBufferMapper(GraphicBufferMapper::get()),
-      mInitCheck(NO_ERROR), mId(getUniqueId()), mGenerationNumber(0)
+      mInitCheck(NO_ERROR), mId(getUniqueId())
 {
     width  = static_cast<int>(inWidth);
     height = static_cast<int>(inHeight);
@@ -85,8 +85,7 @@ GraphicBuffer::GraphicBuffer(uint32_t inWidth, uint32_t inHeight,
 GraphicBuffer::GraphicBuffer(ANativeWindowBuffer* buffer, bool keepOwnership)
     : BASE(), mOwner(keepOwnership ? ownHandle : ownNone),
       mBufferMapper(GraphicBufferMapper::get()),
-      mInitCheck(NO_ERROR), mWrappedBuffer(buffer), mId(getUniqueId()),
-      mGenerationNumber(0)
+      mInitCheck(NO_ERROR), mWrappedBuffer(buffer), mId(getUniqueId())
 {
     width  = buffer->width;
     height = buffer->height;
