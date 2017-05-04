@@ -480,11 +480,11 @@ void SurfaceFlinger::init() {
         mEventQueue.setEventThread(mSFEventThread);
 
 #ifndef HARDWARE_SCHED_FIFO
-       // set SFEventThread to SCHED_RR to minimize jitter
+       // set SFEventThread to SCHED_FIFO to minimize jitter
        struct sched_param param = {0};
        param.sched_priority = 4;
-       if (sched_setscheduler(mSFEventThread->getTid(), SCHED_RR, &param) != 0) {
-           ALOGE("Couldn't set SCHED_RR for SFEventThread");
+       if (sched_setscheduler(mSFEventThread->getTid(), SCHED_FIFO, &param) != 0) {
+           ALOGE("Couldn't set SCHED_FIFO for SFEventThread");
        }
 #endif
     } else {
@@ -494,11 +494,11 @@ void SurfaceFlinger::init() {
         mEventQueue.setEventThread(mEventThread);
 
 #ifndef HARDWARE_SCHED_FIFO
-       // set SFEventThread to SCHED_RR to minimize jitter
+       // set EventThread to SCHED_FIFO to minimize jitter
        struct sched_param param = {0};
        param.sched_priority = 4;
-       if (sched_setscheduler(mEventThread->getTid(), SCHED_RR, &param) != 0) {
-           ALOGE("Couldn't set SCHED_RR for SFEventThread");
+       if (sched_setscheduler(mEventThread->getTid(), SCHED_FIFO, &param) != 0) {
+           ALOGE("Couldn't set SCHED_FIFO for SFEventThread");
        }
 #endif
     }
