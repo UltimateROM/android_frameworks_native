@@ -383,7 +383,7 @@ DispSync::DispSync(const char* name) :
         mRefreshSkipCount(0),
         mThread(new DispSyncThread(name)) {
 
-    mThread->run("DispSync", PRIORITY_URGENT_DISPLAY + PRIORITY_MORE_FAVORABLE);
+    mThread->run("DispSync", PRIORITY_REALTIME);
 #ifndef HARDWARE_SCHED_FIFO
     // set DispSync to SCHED_FIFO to minimize jitter
     struct sched_param param = {0};
