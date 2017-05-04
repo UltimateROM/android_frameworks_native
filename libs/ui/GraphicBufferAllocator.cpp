@@ -25,7 +25,6 @@
 #include <utils/Trace.h>
 
 #include <ui/GraphicBufferAllocator.h>
-#include <ui/Gralloc1On0Adapter.h>
 
 namespace android {
 // ---------------------------------------------------------------------------
@@ -37,10 +36,20 @@ KeyedVector<buffer_handle_t,
     GraphicBufferAllocator::alloc_rec_t> GraphicBufferAllocator::sAllocList;
 
 GraphicBufferAllocator::GraphicBufferAllocator()
-  : mLoader(std::make_unique<Gralloc1::Loader>()),
-    mDevice(mLoader->getDevice()) {}
+    : mAllocDev(0)
+{
+    hw_module_t const* module;
+    int err = hw_get_module(GRALLOC_HARDWARE_MODULE_ID, &module);
+    ALOGE_IF(err, "FATAL: can't find the %s module", GRALLOC_HARDWARE_MODULE_ID);
+    if (err == 0) {
+        gralloc_open(module, &mAllocDev);
+    }
+}
 
-GraphicBufferAllocator::~GraphicBufferAllocator() {}
+GraphicBufferAllocator::~GraphicBufferAllocator()
+{
+    gralloc_close(mAllocDev);
+}
 
 void GraphicBufferAllocator::dump(String8& result) const
 {
@@ -55,23 +64,23 @@ void GraphicBufferAllocator::dump(String8& result) const
     for (size_t i=0 ; i<c ; i++) {
         const alloc_rec_t& rec(list.valueAt(i));
         if (rec.size) {
-            snprintf(buffer, SIZE, "%10p: %7.2f KiB | %4u (%4u) x %4u | %8X | 0x%08x | %s\n",
+            snprintf(buffer, SIZE, "%10p: %7.2f KiB | %4u (%4u) x %4u | %8X | 0x%08x\n",
                     list.keyAt(i), rec.size/1024.0f,
-                    rec.width, rec.stride, rec.height, rec.format, rec.usage,
-                    rec.requestorName.c_str());
+                    rec.width, rec.stride, rec.height, rec.format, rec.usage);
         } else {
-            snprintf(buffer, SIZE, "%10p: unknown     | %4u (%4u) x %4u | %8X | 0x%08x | %s\n",
+            snprintf(buffer, SIZE, "%10p: unknown     | %4u (%4u) x %4u | %8X | 0x%08x\n",
                     list.keyAt(i),
-                    rec.width, rec.stride, rec.height, rec.format, rec.usage,
-                    rec.requestorName.c_str());
+                    rec.width, rec.stride, rec.height, rec.format, rec.usage);
         }
         result.append(buffer);
         total += rec.size;
     }
     snprintf(buffer, SIZE, "Total allocated (estimate): %.2f KB\n", total/1024.0f);
     result.append(buffer);
-    std::string deviceDump = mDevice->dump();
-    result.append(deviceDump.c_str(), deviceDump.size());
+    if (mAllocDev->common.version >= 1 && mAllocDev->dump) {
+        mAllocDev->dump(mAllocDev, buffer, SIZE);
+        result.append(buffer);
+    }
 }
 
 void GraphicBufferAllocator::dumpToSystemLog()
@@ -81,9 +90,9 @@ void GraphicBufferAllocator::dumpToSystemLog()
     ALOGD("%s", s.string());
 }
 
-status_t GraphicBufferAllocator::allocate(uint32_t width, uint32_t height,
+status_t GraphicBufferAllocator::alloc(uint32_t width, uint32_t height,
         PixelFormat format, uint32_t usage, buffer_handle_t* handle,
-        uint32_t* stride, uint64_t graphicBufferId, std::string requestorName)
+        uint32_t* stride)
 {
     ATRACE_CALL();
 
@@ -92,46 +101,22 @@ status_t GraphicBufferAllocator::allocate(uint32_t width, uint32_t height,
     if (!width || !height)
         width = height = 1;
 
+    // we have a h/w allocator and h/w buffer is requested
+    status_t err;
+
     // Filter out any usage bits that should not be passed to the gralloc module
     usage &= GRALLOC_USAGE_ALLOC_MASK;
 
-    auto descriptor = mDevice->createDescriptor();
-    auto error = descriptor->setDimensions(width, height);
-    if (error != GRALLOC1_ERROR_NONE) {
-        ALOGE("Failed to set dimensions to (%u, %u): %d", width, height, error);
-        return BAD_VALUE;
-    }
-    error = descriptor->setFormat(static_cast<android_pixel_format_t>(format));
-    if (error != GRALLOC1_ERROR_NONE) {
-        ALOGE("Failed to set format to %d: %d", format, error);
-        return BAD_VALUE;
-    }
-    error = descriptor->setProducerUsage(
-            static_cast<gralloc1_producer_usage_t>(usage));
-    if (error != GRALLOC1_ERROR_NONE) {
-        ALOGE("Failed to set producer usage to %u: %d", usage, error);
-        return BAD_VALUE;
-    }
-    error = descriptor->setConsumerUsage(
-            static_cast<gralloc1_consumer_usage_t>(usage));
-    if (error != GRALLOC1_ERROR_NONE) {
-        ALOGE("Failed to set consumer usage to %u: %d", usage, error);
-        return BAD_VALUE;
-    }
+    int outStride = 0;
+    err = mAllocDev->alloc(mAllocDev, static_cast<int>(width),
+            static_cast<int>(height), format, static_cast<int>(usage), handle,
+            &outStride);
+    *stride = static_cast<uint32_t>(outStride);
 
-    error = mDevice->allocate(descriptor, graphicBufferId, handle);
-    if (error != GRALLOC1_ERROR_NONE) {
-        ALOGE("Failed to allocate (%u x %u) format %d usage %u: %d",
-                width, height, format, usage, error);
-        return NO_MEMORY;
-    }
+    ALOGW_IF(err, "alloc(%u, %u, %d, %08x, ...) failed %d (%s)",
+            width, height, format, usage, err, strerror(-err));
 
-    error = mDevice->getStride(*handle, stride);
-    if (error != GRALLOC1_ERROR_NONE) {
-        ALOGW("Failed to get stride from buffer: %d", error);
-    }
-
-    if (error == NO_ERROR) {
+    if (err == NO_ERROR) {
         Mutex::Autolock _l(sLock);
         KeyedVector<buffer_handle_t, alloc_rec_t>& list(sAllocList);
         uint32_t bpp = bytesPerPixel(format);
@@ -142,27 +127,27 @@ status_t GraphicBufferAllocator::allocate(uint32_t width, uint32_t height,
         rec.format = format;
         rec.usage = usage;
         rec.size = static_cast<size_t>(height * (*stride) * bpp);
-        rec.requestorName = std::move(requestorName);
         list.add(*handle, rec);
     }
 
-    return NO_ERROR;
+    return err;
 }
 
 status_t GraphicBufferAllocator::free(buffer_handle_t handle)
 {
     ATRACE_CALL();
+    status_t err;
 
-    auto error = mDevice->release(handle);
-    if (error != GRALLOC1_ERROR_NONE) {
-        ALOGE("Failed to free buffer: %d", error);
+    err = mAllocDev->free(mAllocDev, handle);
+
+    ALOGW_IF(err, "free(...) failed %d (%s)", err, strerror(-err));
+    if (err == NO_ERROR) {
+        Mutex::Autolock _l(sLock);
+        KeyedVector<buffer_handle_t, alloc_rec_t>& list(sAllocList);
+        list.removeItem(handle);
     }
 
-    Mutex::Autolock _l(sLock);
-    KeyedVector<buffer_handle_t, alloc_rec_t>& list(sAllocList);
-    list.removeItem(handle);
-
-    return NO_ERROR;
+    return err;
 }
 
 // ---------------------------------------------------------------------------

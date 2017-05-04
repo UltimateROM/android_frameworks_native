@@ -54,7 +54,7 @@ GraphicBuffer::GraphicBuffer()
 }
 
 GraphicBuffer::GraphicBuffer(uint32_t inWidth, uint32_t inHeight,
-        PixelFormat inFormat, uint32_t inUsage, std::string requestorName)
+        PixelFormat inFormat, uint32_t inUsage)
     : BASE(), mOwner(ownData), mBufferMapper(GraphicBufferMapper::get()),
       mInitCheck(NO_ERROR), mId(getUniqueId()), mGenerationNumber(0)
 {
@@ -64,8 +64,7 @@ GraphicBuffer::GraphicBuffer(uint32_t inWidth, uint32_t inHeight,
     format =
     usage  = 0;
     handle = NULL;
-    mInitCheck = initSize(inWidth, inHeight, inFormat, inUsage,
-            std::move(requestorName));
+    mInitCheck = initSize(inWidth, inHeight, inFormat, inUsage);
 }
 
 GraphicBuffer::GraphicBuffer(uint32_t inWidth, uint32_t inHeight,
@@ -156,7 +155,7 @@ status_t GraphicBuffer::reallocate(uint32_t inWidth, uint32_t inHeight,
         allocator.free(handle);
         handle = 0;
     }
-    return initSize(inWidth, inHeight, inFormat, inUsage, "[Reallocation]");
+    return initSize(inWidth, inHeight, inFormat, inUsage);
 }
 
 bool GraphicBuffer::needsReallocation(uint32_t inWidth, uint32_t inHeight,
@@ -170,12 +169,12 @@ bool GraphicBuffer::needsReallocation(uint32_t inWidth, uint32_t inHeight,
 }
 
 status_t GraphicBuffer::initSize(uint32_t inWidth, uint32_t inHeight,
-        PixelFormat inFormat, uint32_t inUsage, std::string requestorName)
+        PixelFormat inFormat, uint32_t inUsage)
 {
     GraphicBufferAllocator& allocator = GraphicBufferAllocator::get();
     uint32_t outStride = 0;
-    status_t err = allocator.allocate(inWidth, inHeight, inFormat, inUsage,
-            &handle, &outStride, mId, std::move(requestorName));
+    status_t err = allocator.alloc(inWidth, inHeight, inFormat, inUsage,
+            &handle, &outStride);
     if (err == NO_ERROR) {
         width = static_cast<int>(inWidth);
         height = static_cast<int>(inHeight);
@@ -395,7 +394,7 @@ status_t GraphicBuffer::unflatten(
     mOwner = ownHandle;
 
     if (handle != 0) {
-        status_t err = mBufferMapper.registerBuffer(this);
+        status_t err = mBufferMapper.registerBuffer(handle);
         if (err != NO_ERROR) {
             width = height = stride = format = usage = 0;
             handle = NULL;
