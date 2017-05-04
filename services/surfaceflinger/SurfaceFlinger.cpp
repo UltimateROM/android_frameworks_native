@@ -488,12 +488,14 @@ void SurfaceFlinger::init() {
         mSFEventThread = new EventThread(sfVsyncSrc, *this);
         mEventQueue.setEventThread(mSFEventThread);
 
+#ifndef HARDWARE_SCHED_FIFO
         // set SFEventThread to SCHED_FIFO to minimize jitter
         struct sched_param param = {0};
         param.sched_priority = 2;
         if (sched_setscheduler(mSFEventThread->getTid(), SCHED_FIFO, &param) != 0) {
             ALOGE("Couldn't set SCHED_FIFO for SFEventThread");
         }
+#endif
 
         // Get a RenderEngine for the given display / config (can't fail)
         mRenderEngine = RenderEngine::create(mEGLDisplay,
@@ -2740,17 +2742,21 @@ void SurfaceFlinger::setPowerModeInternal(const sp<DisplayDevice>& hw,
         mHasPoweredOff = true;
         repaintEverything();
 
+#ifndef HARDWARE_SCHED_FIFO
         struct sched_param param = {0};
         param.sched_priority = 1;
         if (sched_setscheduler(0, SCHED_FIFO, &param) != 0) {
             ALOGW("Couldn't set SCHED_FIFO on display on");
         }
+#endif
     } else if (mode == HWC_POWER_MODE_OFF) {
+#ifndef HARDWARE_SCHED_FIFO
         // Turn off the display
         struct sched_param param = {0};
         if (sched_setscheduler(0, SCHED_OTHER, &param) != 0) {
             ALOGW("Couldn't set SCHED_OTHER on display off");
         }
+#endif
 
         if (type == DisplayDevice::DISPLAY_PRIMARY) {
             disableHardwareVsync(true); // also cancels any in-progress resync
