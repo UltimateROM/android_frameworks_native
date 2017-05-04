@@ -578,7 +578,9 @@ void SurfaceFlinger::init() {
     // set initial conditions (e.g. unblank default device)
     initializeDisplays();
 
+#ifndef SHADER_CACHE_OFF
     mRenderEngine->primeCache();
+#endif
 
     // start boot animation
     startBootAnim();
