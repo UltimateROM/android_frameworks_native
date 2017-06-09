@@ -30,6 +30,7 @@
 
 #include <EGL/egl.h>
 
+#include <cutils/iosched_policy.h>
 #include <cutils/log.h>
 #include <cutils/properties.h>
 
@@ -64,6 +65,7 @@
 #include <private/gui/SyncFeatures.h>
 
 #include "./DisplayUtils.h"
+
 #include <set>
 
 #include "Client.h"
@@ -478,10 +480,10 @@ void SurfaceFlinger::init() {
                 sfVsyncPhaseOffsetNs, true, "sf");
         mSFEventThread = new EventThread(sfVsyncSrc, *this);
         mEventQueue.setEventThread(mSFEventThread);
-		
+
        // set SFEventThread to SCHED_FIFO to minimize jitter
        struct sched_param param = {0};
-       param.sched_priority = 4;
+       param.sched_priority = 2;
        if (sched_setscheduler(mSFEventThread->getTid(), SCHED_FIFO, &param) != 0) {
            ALOGE("Couldn't set SCHED_FIFO for SFEventThread");
        }
@@ -490,10 +492,10 @@ void SurfaceFlinger::init() {
                          vsyncPhaseOffsetNs, true, "sf-app");
         mEventThread = new EventThread(vsyncSrc, *this);
         mEventQueue.setEventThread(mEventThread);
-		
+
        // set EventThread to SCHED_FIFO to minimize jitter
        struct sched_param param = {0};
-       param.sched_priority = 4;
+       param.sched_priority = 2;
        if (sched_setscheduler(mEventThread->getTid(), SCHED_FIFO, &param) != 0) {
            ALOGE("Couldn't set SCHED_FIFO for SFEventThread");
        }
@@ -560,6 +562,7 @@ void SurfaceFlinger::init() {
 
     mEventControlThread = new EventControlThread(this);
     mEventControlThread->run("EventControl", PRIORITY_REALTIME);
+    android_set_rt_ioprio(mEventControlThread->getTid(), 1);
 
     // set a fake vsync period if there is no HWComposer
     if (mHwc->initCheck() != NO_ERROR) {
@@ -851,53 +854,10 @@ status_t SurfaceFlinger::getAnimationFrameStats(FrameStats* outStats) const {
     return NO_ERROR;
 }
 
-status_t SurfaceFlinger::getHdrCapabilities(const sp<IBinder>& display,
+status_t SurfaceFlinger::getHdrCapabilities(const sp<IBinder>& /*display*/,
         HdrCapabilities* outCapabilities) const {
-
-    if (!display.get())
-        return NAME_NOT_FOUND;
-
-    int32_t type = NAME_NOT_FOUND;
-    for (int i=0 ; i < DisplayDevice::NUM_BUILTIN_DISPLAY_TYPES ; i++) {
-        if (display == mBuiltinDisplays[i]) {
-            type = i;
-            break;
-        }
-    }
-
-    if (type < 0) {
-        return type;
-    }
-
-#ifdef QTI_BSP
-    // Call into display.qservice
-    Parcel reply;
-    sp<IServiceManager> sm(defaultServiceManager());
-    sp<IBinder> binder =
-        sm->getService(String16("display.qservice"));
-    Parcel input;
-    input.writeInterfaceToken(String16("android.display.IQService"));
-    input.writeInt32(type);
-    // GET_HDR_CAPABILITIES = 35 from IQService.h
-    binder->transact(35, input, &reply);
-    if (outCapabilities != nullptr) {
-        outCapabilities->readFromParcel(&reply);
-        if (outCapabilities->getSupportedHdrTypes().size() != 0) {
-            ALOGD("HDR support on display: %d", type);
-            for (auto hdrtype : outCapabilities->getSupportedHdrTypes()) {
-                ALOGD(" HDR type: %d", hdrtype);
-            }
-            ALOGD(" HDR max luminance: %f", outCapabilities->getDesiredMaxLuminance());
-            ALOGD(" HDR max avg luminance: %f",
-                  outCapabilities->getDesiredMaxAverageLuminance());
-            ALOGD(" HDR min luminance: %f", outCapabilities->getDesiredMinLuminance());
-        } else {
-            ALOGI("HDR is not supported on display: %d", type);
-        }
-    }
-#else
+    // HWC1 does not provide HDR capabilities
     *outCapabilities = HdrCapabilities();
-#endif
     return NO_ERROR;
 }
 
@@ -2342,7 +2302,8 @@ void SurfaceFlinger::setTransactionState(
         if (s.client != NULL) {
             sp<IBinder> binder = IInterface::asBinder(s.client);
             if (binder != NULL) {
-                if (binder->queryLocalInterface(ISurfaceComposerClient::descriptor) != NULL) {
+                String16 desc(binder->getInterfaceDescriptor());
+                if (desc == ISurfaceComposerClient::descriptor) {
                     sp<Client> client( static_cast<Client *>(s.client.get()) );
                     transactionFlags |= setClientStateLocked(client, s.state);
                 }
@@ -2739,9 +2700,9 @@ void SurfaceFlinger::setPowerModeInternal(const sp<DisplayDevice>& hw,
         repaintEverything();
 
         struct sched_param param = {0};
-        param.sched_priority = 2;
-        if (sched_setscheduler(0, SCHED_RR, &param) != 0) {
-            ALOGW("Couldn't set SCHED_RR on display on");
+        param.sched_priority = 1;
+        if (sched_setscheduler(0, SCHED_FIFO, &param) != 0) {
+            ALOGW("Couldn't set SCHED_FIFO on display on");
         }
     } else if (mode == HWC_POWER_MODE_OFF) {
         // Turn off the display

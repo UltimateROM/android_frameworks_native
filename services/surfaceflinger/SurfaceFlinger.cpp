@@ -27,6 +27,7 @@
 
 #include <EGL/egl.h>
 
+#include <cutils/iosched_policy.h>
 #include <cutils/log.h>
 #include <cutils/properties.h>
 
@@ -162,6 +163,7 @@ SurfaceFlinger::SurfaceFlinger()
         mPrimaryHWVsyncEnabled(false),
         mHWVsyncAvailable(false),
         mHasColorMatrix(false),
+        mHasSecondaryColorMatrix(false),
         mHasPoweredOff(false),
         mFrameBuckets(),
         mTotalTime(0),
@@ -489,7 +491,7 @@ void SurfaceFlinger::init() {
 
         // set SFEventThread to SCHED_FIFO to minimize jitter
         struct sched_param param = {0};
-        param.sched_priority = 4;
+        param.sched_priority = 2;
         if (sched_setscheduler(mSFEventThread->getTid(), SCHED_FIFO, &param) != 0) {
             ALOGE("Couldn't set SCHED_FIFO for SFEventThread");
         }
@@ -519,6 +521,7 @@ void SurfaceFlinger::init() {
 
     mEventControlThread = new EventControlThread(this);
     mEventControlThread->run("EventControl", PRIORITY_REALTIME);
+    android_set_rt_ioprio(mEventControlThread->getTid(), 1);
 
     // initialize our drawing state
     mDrawingState = mCurrentState;
@@ -1288,7 +1291,7 @@ void SurfaceFlinger::rebuildLayerStacks() {
             const Transform& tr(displayDevice->getTransform());
             const Rect bounds(displayDevice->getBounds());
             if (displayDevice->isDisplayOn()) {
-                SurfaceFlinger::computeVisibleRegions(dpy, layers,
+                SurfaceFlinger::computeVisibleRegions(displayDevice->getHwcDisplayId(), layers,
                         displayDevice->getLayerStack(), dirtyRegion,
                         opaqueRegion);
 
@@ -1848,7 +1851,7 @@ void SurfaceFlinger::commitTransaction()
     mTransactionCV.broadcast();
 }
 
-void SurfaceFlinger::computeVisibleRegions(size_t /*dpy*/,
+void SurfaceFlinger::computeVisibleRegions(size_t /* dpy */,
         const LayerVector& currentLayers, uint32_t layerStack,
         Region& outDirtyRegion, Region& outOpaqueRegion)
 {
@@ -2348,7 +2351,8 @@ void SurfaceFlinger::setTransactionState(
         if (s.client != NULL) {
             sp<IBinder> binder = IInterface::asBinder(s.client);
             if (binder != NULL) {
-                if (binder->queryLocalInterface(ISurfaceComposerClient::descriptor) != NULL) {
+                String16 desc(binder->getInterfaceDescriptor());
+                if (desc == ISurfaceComposerClient::descriptor) {
                     sp<Client> client( static_cast<Client *>(s.client.get()) );
                     transactionFlags |= setClientStateLocked(client, s.state);
                 }
@@ -2741,9 +2745,9 @@ void SurfaceFlinger::setPowerModeInternal(const sp<DisplayDevice>& hw,
         repaintEverything();
 
         struct sched_param param = {0};
-        param.sched_priority = 2;
-        if (sched_setscheduler(0, SCHED_RR, &param) != 0) {
-            ALOGW("Couldn't set SCHED_RR on display on");
+        param.sched_priority = 1;
+        if (sched_setscheduler(0, SCHED_FIFO, &param) != 0) {
+            ALOGW("Couldn't set SCHED_FIFO on display on");
         }
     } else if (mode == HWC_POWER_MODE_OFF) {
         // Turn off the display

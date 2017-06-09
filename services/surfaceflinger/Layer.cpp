@@ -59,8 +59,6 @@
 
 #define DEBUG_RESIZE    0
 
-#define MAX_POSITION 32767
-
 namespace android {
 
 // ---------------------------------------------------------------------------
@@ -804,8 +802,7 @@ void Layer::setPerFrameData(const sp<const DisplayDevice>& hw,
     // Apply this display's projection's viewport to the visible region
     // before giving it to the HWC HAL.
     const Transform& tr = hw->getTransform();
-    Region visible = tr.transform(visibleNonTransparentRegion.intersect(
-                                   hw->getViewport()));
+    Region visible = tr.transform(visibleRegion.intersect(hw->getViewport()));
     layer.setVisibleRegionScreen(visible);
     layer.setSurfaceDamage(surfaceDamageRegion);
     mIsGlesComposition = (layer.getCompositionType() == HWC_FRAMEBUFFER);
@@ -1354,9 +1351,9 @@ void Layer::computeGeometry(const sp<const DisplayDevice>& hw, Mesh& mesh,
 
 bool Layer::isOpaque(const Layer::State& s) const
 {
-    // if we don't have a buffer or sidebandStream yet, we're translucent regardless of the
+    // if we don't have a buffer yet, we're translucent regardless of the
     // layer's opaque flag.
-    if ((mSidebandStream == nullptr) && (mActiveBuffer == nullptr)) {
+    if (mActiveBuffer == 0) {
         return false;
     }
 
@@ -1445,7 +1442,6 @@ void Layer::pushPendingState() {
 
         // Wake us up to check if the frame has been received
         setTransactionFlags(eTransactionNeeded);
-        mFlinger->setTransactionFlags(eTraversalNeeded);
     }
     mPendingStates.push_back(mCurrentState);
 }
@@ -1655,10 +1651,6 @@ uint32_t Layer::setTransactionFlags(uint32_t flags) {
 bool Layer::setPosition(float x, float y, bool immediate) {
     if (mCurrentState.requested.transform.tx() == x && mCurrentState.requested.transform.ty() == y)
         return false;
-    if ((y > MAX_POSITION) || (x > MAX_POSITION)) {
-        ALOGE("%s:: failed %s  x = %f y = %f",__FUNCTION__,mName.string(),x, y);
-        return false;
-    }
     mCurrentState.sequence++;
 
     // We update the requested and active position simultaneously because

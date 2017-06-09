@@ -38,11 +38,8 @@ class ExHWComposer : public HWComposer
 public:
 
     ExHWComposer(
-               const sp<SurfaceFlinger>& flinger
-#ifndef USE_HWC2
-               , EventHandler& handler
-#endif
-    );
+               const sp<SurfaceFlinger>& flinger,
+               EventHandler& handler);
 
     virtual ~ExHWComposer();
 

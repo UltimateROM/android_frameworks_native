@@ -230,7 +230,6 @@ void ExSurfaceFlinger::isfreezeSurfacePresent(bool& freezeSurfacePresent,
     }
 }
 
-#ifndef USE_HWC2
 void ExSurfaceFlinger::setOrientationEventControl(bool& freezeSurfacePresent,
                              const int32_t& id) {
     HWComposer& hwc(getHwComposer());
@@ -245,7 +244,6 @@ void ExSurfaceFlinger::setOrientationEventControl(bool& freezeSurfacePresent,
         cur->setAnimating(true);
     }
 }
-#endif
 
 void ExSurfaceFlinger::updateVisibleRegionsDirty() {
     /* If extended_mode is set, and set mVisibleRegionsDirty
@@ -256,7 +254,6 @@ void ExSurfaceFlinger::updateVisibleRegionsDirty() {
     }
 }
 
-#ifndef USE_HWC2
 void ExSurfaceFlinger::drawWormHoleIfRequired(HWComposer::LayerListIterator& cur,
         const HWComposer::LayerListIterator& end,
         const sp<const DisplayDevice>& hw,
@@ -270,7 +267,6 @@ void ExSurfaceFlinger::drawWormHoleIfRequired(HWComposer::LayerListIterator& cur
            drawWormhole(hw, region);
     }
 }
-#endif
 
 #if (defined QTI_BSP) && (defined QTI_S3D)
 bool ExSurfaceFlinger::isS3DLayerPresent(const sp<const DisplayDevice>& hw) {

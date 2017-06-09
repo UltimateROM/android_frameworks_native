@@ -110,28 +110,16 @@ endif
 # [1] https://developer.android.com/studio/profile/systrace.html
 # [2] https://developer.android.com/training/testing/performance.html
 
-# On HWC2, SurfaceFlinger races against hardware vsync
-# on untuned video-mode panels, which can result in a significant number of dropped frames.
-# HWC1 does not have this issue, so set the offsets to 1ms on HWC2 and 0ms for HWC1.
-
 ifneq ($(VSYNC_EVENT_PHASE_OFFSET_NS),)
     LOCAL_CFLAGS += -DVSYNC_EVENT_PHASE_OFFSET_NS=$(VSYNC_EVENT_PHASE_OFFSET_NS)
 else
-    ifeq ($(TARGET_USES_HWC2),true)
-        LOCAL_CFLAGS += -DVSYNC_EVENT_PHASE_OFFSET_NS=1000000
-    else
-        LOCAL_CFLAGS += -DVSYNC_EVENT_PHASE_OFFSET_NS=0
-    endif
+    LOCAL_CFLAGS += -DVSYNC_EVENT_PHASE_OFFSET_NS=1000000
 endif
 
 ifneq ($(SF_VSYNC_EVENT_PHASE_OFFSET_NS),)
     LOCAL_CFLAGS += -DSF_VSYNC_EVENT_PHASE_OFFSET_NS=$(SF_VSYNC_EVENT_PHASE_OFFSET_NS)
 else
-    ifeq ($(TARGET_USES_HWC2),true)
-        LOCAL_CFLAGS += -DSF_VSYNC_EVENT_PHASE_OFFSET_NS=1000000
-    else
-        LOCAL_CFLAGS += -DSF_VSYNC_EVENT_PHASE_OFFSET_NS=0
-    endif
+    LOCAL_CFLAGS += -DSF_VSYNC_EVENT_PHASE_OFFSET_NS=1000000
 endif
 
 ifneq ($(PRESENT_TIME_OFFSET_FROM_VSYNC_NS),)
@@ -174,16 +162,19 @@ ifeq ($(TARGET_USES_QCOM_BSP), true)
     LOCAL_C_INCLUDES += $(BOARD_DISPLAY_HAL)/libgralloc
     LOCAL_C_INCLUDES += $(BOARD_DISPLAY_HAL)/libqdutils
   else
-    LOCAL_C_INCLUDES += $(TARGET_OUT_HEADERS)/qcom/display
+    LOCAL_C_INCLUDES += $(call project-path-for,qcom-display)/libgralloc
+    LOCAL_C_INCLUDES += $(call project-path-for,qcom-display)/libqdutils
   endif
   LOCAL_SHARED_LIBRARIES += libqdutils
   LOCAL_SHARED_LIBRARIES += libqdMetaData
   LOCAL_CFLAGS += -DQTI_BSP
+  ifneq ($(TARGET_USES_HWC2),true)
   LOCAL_SRC_FILES += \
     ExSurfaceFlinger/ExLayer.cpp \
     ExSurfaceFlinger/ExSurfaceFlinger.cpp \
     ExSurfaceFlinger/ExVirtualDisplaySurface.cpp \
     ExSurfaceFlinger/ExHWComposer.cpp
+  endif
 endif
 
 ifeq ($(BOARD_USES_HWC_SERVICES), true)
