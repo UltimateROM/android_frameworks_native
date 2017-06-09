@@ -62,9 +62,9 @@ static bool is_valid_filename(const std::string& name) {
     }
 }
 
-static void check_package_name(const char* package_name) {
-    CHECK(is_valid_filename(package_name));
-    CHECK(is_valid_package_name(package_name) == 0);
+static bool check_package_name(const char* package_name) {
+    return (is_valid_filename(package_name) == 0) &&
+           (is_valid_package_name(package_name) == 0);
 }
 
 /**
