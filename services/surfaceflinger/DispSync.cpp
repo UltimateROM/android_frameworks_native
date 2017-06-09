@@ -383,14 +383,12 @@ DispSync::DispSync(const char* name) :
         mThread(new DispSyncThread(name)) {
 
     mThread->run("DispSync", PRIORITY_REALTIME);
-#ifndef HARDWARE_SCHED_FIFO
     // set DispSync to SCHED_FIFO to minimize jitter
     struct sched_param param = {0};
     param.sched_priority = 4;
     if (sched_setscheduler(mThread->getTid(), SCHED_FIFO, &param) != 0) {
         ALOGE("Couldn't set SCHED_FIFO for DispSyncThread");
     }
-#endif
 
     reset();
     beginResync();

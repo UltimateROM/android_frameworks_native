@@ -478,29 +478,25 @@ void SurfaceFlinger::init() {
                 sfVsyncPhaseOffsetNs, true, "sf");
         mSFEventThread = new EventThread(sfVsyncSrc, *this);
         mEventQueue.setEventThread(mSFEventThread);
-
-#ifndef HARDWARE_SCHED_FIFO
+		
        // set SFEventThread to SCHED_FIFO to minimize jitter
        struct sched_param param = {0};
        param.sched_priority = 4;
        if (sched_setscheduler(mSFEventThread->getTid(), SCHED_FIFO, &param) != 0) {
            ALOGE("Couldn't set SCHED_FIFO for SFEventThread");
        }
-#endif
     } else {
         sp<VSyncSource> vsyncSrc = new DispSyncSource(&mPrimaryDispSync,
                          vsyncPhaseOffsetNs, true, "sf-app");
         mEventThread = new EventThread(vsyncSrc, *this);
         mEventQueue.setEventThread(mEventThread);
-
-#ifndef HARDWARE_SCHED_FIFO
+		
        // set EventThread to SCHED_FIFO to minimize jitter
        struct sched_param param = {0};
        param.sched_priority = 4;
        if (sched_setscheduler(mEventThread->getTid(), SCHED_FIFO, &param) != 0) {
            ALOGE("Couldn't set SCHED_FIFO for SFEventThread");
        }
-#endif
     }
 
     // Initialize the H/W composer object.  There may or may not be an
@@ -2742,21 +2738,17 @@ void SurfaceFlinger::setPowerModeInternal(const sp<DisplayDevice>& hw,
         mHasPoweredOff = true;
         repaintEverything();
 
-#ifndef HARDWARE_SCHED_FIFO
         struct sched_param param = {0};
         param.sched_priority = 2;
         if (sched_setscheduler(0, SCHED_RR, &param) != 0) {
             ALOGW("Couldn't set SCHED_RR on display on");
         }
-#endif
     } else if (mode == HWC_POWER_MODE_OFF) {
-#ifndef HARDWARE_SCHED_FIFO
         // Turn off the display
         struct sched_param param = {0};
         if (sched_setscheduler(0, SCHED_OTHER, &param) != 0) {
             ALOGW("Couldn't set SCHED_OTHER on display off");
         }
-#endif
 
         if (type == DisplayDevice::DISPLAY_PRIMARY) {
             disableHardwareVsync(true); // also cancels any in-progress resync
