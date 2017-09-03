@@ -133,10 +133,6 @@ status_t GraphicBufferAllocator::allocate(uint32_t width, uint32_t height,
 
         return NO_ERROR;
     } else {
-        ALOGE("Failed to allocate (%u x %u) layerCount %u format %d "
-                "usage %" PRIx64 ": %d",
-                width, height, layerCount, format, usage,
-                error);
         return NO_MEMORY;
     }
 }
