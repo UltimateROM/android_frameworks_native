@@ -54,6 +54,9 @@ class SensorManager : public ASensorManager
 {
 public:
     static SensorManager& getInstanceForPackage(const String16& packageName);
+#ifdef STE_HARDWARE
+    SensorManager();
+#endif
     ~SensorManager();
 
 #ifdef COMPAT_SENSORS_M
@@ -63,7 +66,12 @@ public:
 #endif
     ssize_t getDynamicSensorList(Vector<Sensor>& list);
     Sensor const* getDefaultSensor(int type);
+#ifdef STE_HARDWARE
+    sp<SensorEventQueue> createEventQueue();
+    sp<SensorEventQueue> createEventQueue(String8 packageName, int mode = 0);
+#else
     sp<SensorEventQueue> createEventQueue(String8 packageName = String8(""), int mode = 0);
+#endif
     bool isDataInjectionEnabled();
     int createDirectChannel(size_t size, int channelType, const native_handle_t *channelData);
     void destroyDirectChannel(int channelNativeHandle);
