@@ -20,7 +20,9 @@
 #include <string>
 #include <vector>
 
+#ifndef CHARGER
 #include <android-base/unique_fd.h>
+#endif
 #include <cutils/native_handle.h>
 #include <utils/Errors.h>
 #include <utils/RefBase.h>
@@ -208,15 +210,16 @@ public:
     // Place a file descriptor into the parcel.  This will not affect the
     // semantics of the smart file descriptor. A new descriptor will be
     // created, and will be closed when the parcel is destroyed.
+#ifndef CHARGER
     status_t            writeUniqueFileDescriptor(
                             const base::unique_fd& fd);
-
     // Place a vector of file desciptors into the parcel. Each descriptor is
     // dup'd as in writeDupFileDescriptor
     status_t            writeUniqueFileDescriptorVector(
                             const std::unique_ptr<std::vector<base::unique_fd>>& val);
     status_t            writeUniqueFileDescriptorVector(
                             const std::vector<base::unique_fd>& val);
+#endif
 
     // Writes a blob to the parcel.
     // If the blob is small, then it is stored in-place, otherwise it is
@@ -359,7 +362,7 @@ public:
     // Retrieve a Java "parcel file descriptor" from the parcel.  This returns the raw fd
     // in the parcel, which you do not own -- use dup() to get your own copy.
     int                 readParcelFileDescriptor() const;
-
+#ifndef CHARGER
     // Retrieve a smart file descriptor from the parcel.
     status_t            readUniqueFileDescriptor(
                             base::unique_fd* val) const;
@@ -370,7 +373,7 @@ public:
                             std::unique_ptr<std::vector<base::unique_fd>>* val) const;
     status_t            readUniqueFileDescriptorVector(
                             std::vector<base::unique_fd>* val) const;
-
+#endif
     // Reads a blob from the parcel.
     // The caller should call release() on the blob after reading its contents.
     status_t            readBlob(size_t len, ReadableBlob* outBlob) const;
