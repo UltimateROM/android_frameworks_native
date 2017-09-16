@@ -78,10 +78,6 @@ public:
 
     status_t unlockAsync(buffer_handle_t handle, int *fenceFd);
 
-#ifdef STE_HARDWARE
-    status_t getphys(buffer_handle_t handle, void** paddr);
-#endif
-
     const Gralloc2::Mapper& getGrallocMapper() const
     {
         return *mMapper;
