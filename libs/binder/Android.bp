@@ -76,11 +76,6 @@ cc_library {
         export_aidl_headers: true,
     },
 
-    cflags: [
-        "-Wall",
-        "-Wextra",
-        "-Werror",
-    ],
     product_variables: {
         binder32bit: {
             cflags: ["-DBINDER_IPC_32BIT=1"],
@@ -108,4 +103,4 @@ cc_library {
     },
 }
 
-subdirs = ["tests"]
+//subdirs = ["tests"]

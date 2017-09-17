@@ -38,8 +38,12 @@
 // ---------------------------------------------------------------------------
 namespace android {
 
-template <typename T> class Flattenable;
 template <typename T> class LightFlattenable;
+#ifdef STE_HARDWARE
+class Flattenable;
+#else
+template <typename T> class Flattenable;
+#endif
 class IBinder;
 class IPCThreadState;
 class ProcessState;
@@ -173,8 +177,12 @@ public:
 
     status_t            writeValue(const binder::Value& value);
 
+#ifdef STE_HARDWARE
+    status_t            write(const Flattenable& val);
+#else
     template<typename T>
     status_t            write(const Flattenable<T>& val);
+#endif
 
     template<typename T>
     status_t            write(const LightFlattenable<T>& val);
@@ -326,9 +334,12 @@ public:
     status_t            readUtf8VectorFromUtf16Vector(
                             std::unique_ptr<std::vector<std::unique_ptr<std::string>>>* val) const;
     status_t            readUtf8VectorFromUtf16Vector(std::vector<std::string>* val) const;
-
+#ifdef STE_HARDWARE
+    status_t            read(Flattenable& val) const;
+#else
     template<typename T>
     status_t            read(Flattenable<T>& val) const;
+#endif
 
     template<typename T>
     status_t            read(LightFlattenable<T>& val) const;
@@ -503,7 +514,7 @@ private:
     // following Flattenable template/protocol.
     class FlattenableHelperInterface {
     protected:
-        ~FlattenableHelperInterface() { }
+        virtual ~FlattenableHelperInterface() { }
     public:
         virtual size_t getFlattenedSize() const = 0;
         virtual size_t getFdCount() const = 0;
@@ -518,11 +529,18 @@ private:
     // Concrete implementation of FlattenableHelperInterface that delegates virtual calls to the
     // specified class T implementing the Flattenable protocol. It "virtualizes" a compile-time
     // protocol.
+#ifndef STE_HARDWARE
     template<typename T>
+#endif
     class FlattenableHelper : public FlattenableHelperInterface {
         friend class Parcel;
+#ifdef STE_HARDWARE
+        const Flattenable& val;
+        explicit FlattenableHelper(const Flattenable& val) : val(val) { }
+#else
         const Flattenable<T>& val;
         explicit FlattenableHelper(const Flattenable<T>& _val) : val(_val) { }
+#endif
 
     protected:
         ~FlattenableHelper() = default;
@@ -537,7 +555,11 @@ private:
             return val.flatten(buffer, size, fds, count);
         }
         virtual status_t unflatten(void const* buffer, size_t size, int const* fds, size_t count) {
+#ifdef STE_HARDWARE
+            return const_cast<Flattenable&>(val).unflatten(buffer, size, fds, count);
+#else
             return const_cast<Flattenable<T>&>(val).unflatten(buffer, size, fds, count);
+#endif
         }
     };
     status_t write(const FlattenableHelperInterface& val);
@@ -570,11 +592,13 @@ public:
 
 // ---------------------------------------------------------------------------
 
+#ifndef STE_HARDWARE
 template<typename T>
 status_t Parcel::write(const Flattenable<T>& val) {
     const FlattenableHelper<T> helper(val);
     return write(helper);
 }
+#endif
 
 template<typename T>
 status_t Parcel::write(const LightFlattenable<T>& val) {
@@ -597,11 +621,13 @@ status_t Parcel::write(const LightFlattenable<T>& val) {
     return NO_ERROR;
 }
 
+#ifndef STE_HARDWARE
 template<typename T>
 status_t Parcel::read(Flattenable<T>& val) const {
     FlattenableHelper<T> helper(val);
     return read(helper);
 }
+#endif
 
 template<typename T>
 status_t Parcel::read(LightFlattenable<T>& val) const {

@@ -351,6 +351,8 @@ status_t unflatten_binder(const sp<ProcessState>& proc,
 
 // ---------------------------------------------------------------------------
 
+extern "C" status_t _ZN7android6Parcel13writeString16EPKtj() __attribute__((alias("_ZN7android6Parcel13writeString16EPKDsj")));
+
 Parcel::Parcel()
 {
     LOG_ALLOC("Parcel %p: constructing", this);
@@ -1258,6 +1260,13 @@ status_t Parcel::writeDupImmutableBlobFileDescriptor(int fd)
     if (status) return status;
     return writeDupFileDescriptor(fd);
 }
+
+#ifdef STE_HARDWARE
+status_t Parcel::write(const Flattenable& val) {
+    const FlattenableHelper helper(val);
+    return write(helper);
+}
+#endif
 
 status_t Parcel::write(const FlattenableHelperInterface& val)
 {
@@ -2212,6 +2221,13 @@ status_t Parcel::readBlob(size_t len, ReadableBlob* outBlob) const
     return NO_ERROR;
 }
 
+#ifdef STE_HARDWARE
+status_t Parcel::read(Flattenable& val) const {
+    FlattenableHelper helper(val);
+    return read(helper);
+}
+#endif
+
 status_t Parcel::read(FlattenableHelperInterface& val) const
 {
     // size
@@ -2812,5 +2828,3 @@ void Parcel::Blob::clear() {
 }
 
 }; // namespace android
-
-__strong_alias(_ZN7android6Parcel13writeString16EPKtj,_ZN7android6Parcel13writeString16EPKDsj);
