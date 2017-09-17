@@ -57,11 +57,6 @@ cc_library {
         "Value.cpp",
     ],
 
-    cflags: [
-        "-Wall",
-        "-Wextra",
-        "-Werror",
-    ],
     product_variables: {
         binder32bit: {
             cflags: ["-DBINDER_IPC_32BIT=1"],
@@ -89,4 +84,4 @@ cc_library {
     },
 }
 
-subdirs = ["tests"]
+//subdirs = ["tests"]

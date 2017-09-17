@@ -104,7 +104,7 @@ LOCAL_EXPORT_SHARED_LIBRARY_HEADERS := \
     libhidltransport \
     libhwbinder
 
-LOCAL_CFLAGS += -Wall -Werror -Wunused -Wunreachable-code
+LOCAL_CFLAGS += -Wall -Wunused -Wunreachable-code
 
 include $(BUILD_SHARED_LIBRARY)
 
@@ -181,4 +181,4 @@ LOCAL_CFLAGS += -Wall -Werror -Wunused -Wunreachable-code
 include $(BUILD_SHARED_LIBRARY)
 endif # libnativehelper
 
-include $(call first-makefiles-under,$(LOCAL_PATH))
+#include $(call first-makefiles-under,$(LOCAL_PATH))

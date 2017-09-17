@@ -115,7 +115,7 @@ void BufferItemConsumer::freeBufferLocked(int slotIndex) {
     if (listener != NULL && mSlots[slotIndex].mGraphicBuffer != NULL) {
         // Fire callback if we have a listener registered and the buffer being freed is valid.
         BI_LOGV("actually calling onBufferFreed");
-        listener->onBufferFreed(mSlots[slotIndex].mGraphicBuffer);
+        //listener->onBufferFreed(mSlots[slotIndex].mGraphicBuffer);
     }
     ConsumerBase::freeBufferLocked(slotIndex);
 }
