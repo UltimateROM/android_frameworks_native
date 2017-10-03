@@ -481,19 +481,14 @@ status_t BufferQueueProducer::dequeueBuffer(int *outSlot,
 
         eglDisplay = mSlots[found].mEglDisplay;
         eglFence = mSlots[found].mEglFence;
-#ifdef INVALID_BUFFER_SLOT_OFF
-        *outFence = mSlots[found].mFence;
-#else
         // Don't return a fence in shared buffer mode, except for the first
         // frame.
         *outFence = (mCore->mSharedBufferMode &&
                 mCore->mSharedBufferSlot == found) ?
                 Fence::NO_FENCE : mSlots[found].mFence;
-#endif
         mSlots[found].mEglFence = EGL_NO_SYNC_KHR;
         mSlots[found].mFence = Fence::NO_FENCE;
 
-#ifndef INVALID_BUFFER_SLOT_OFF
         // If shared buffer mode has just been enabled, cache the slot of the
         // first buffer that is dequeued and mark it as the shared buffer.
         if (mCore->mSharedBufferMode && mCore->mSharedBufferSlot ==
@@ -501,7 +496,6 @@ status_t BufferQueueProducer::dequeueBuffer(int *outSlot,
             mCore->mSharedBufferSlot = found;
             mSlots[found].mBufferState.mShared = true;
         }
-#endif
     } // Autolock scope
 
     if (returnFlags & BUFFER_NEEDS_REALLOCATION) {
@@ -818,7 +812,6 @@ status_t BufferQueueProducer::queueBuffer(int slot,
             return BAD_VALUE;
         }
 
-#ifndef INVALID_BUFFER_SLOT_OFF
         // If shared buffer mode has just been enabled, cache the slot of the
         // first buffer that is queued and mark it as the shared buffer.
         if (mCore->mSharedBufferMode && mCore->mSharedBufferSlot ==
@@ -826,7 +819,6 @@ status_t BufferQueueProducer::queueBuffer(int slot,
             mCore->mSharedBufferSlot = slot;
             mSlots[slot].mBufferState.mShared = true;
         }
-#endif
 
         BQ_LOGV("queueBuffer: slot=%d/%" PRIu64 " time=%" PRIu64 " dataSpace=%d"
                 " crop=[%d,%d,%d,%d] transform=%#x scale=%s",
