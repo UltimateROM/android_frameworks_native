@@ -509,7 +509,6 @@ status_t BufferQueueProducer::dequeueBuffer(int* outSlot, sp<android::Fence>* ou
             Mutex::Autolock lock(mCore->mMutex);
 
             if (error == NO_ERROR && !mCore->mIsAbandoned) {
-                graphicBuffer->setGenerationNumber(mCore->mGenerationNumber);
                 mSlots[*outSlot].mGraphicBuffer = graphicBuffer;
             }
 
@@ -707,14 +706,14 @@ status_t BufferQueueProducer::attachBuffer(int* outSlot,
         return BAD_VALUE;
     }
 
+    mCore->waitWhileAllocatingLocked();
+
     if (buffer->getGenerationNumber() != mCore->mGenerationNumber) {
         BQ_LOGE("attachBuffer: generation number mismatch [buffer %u] "
                 "[queue %u]", buffer->getGenerationNumber(),
                 mCore->mGenerationNumber);
         return BAD_VALUE;
     }
-
-    mCore->waitWhileAllocatingLocked();
 
     status_t returnFlags = NO_ERROR;
     int found;

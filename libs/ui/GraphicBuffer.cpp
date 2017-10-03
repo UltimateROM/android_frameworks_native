@@ -45,7 +45,7 @@ sp<GraphicBuffer> GraphicBuffer::from(ANativeWindowBuffer* anwb) {
 
 GraphicBuffer::GraphicBuffer()
     : BASE(), mOwner(ownData), mBufferMapper(GraphicBufferMapper::get()),
-      mInitCheck(NO_ERROR), mId(getUniqueId()), mGenerationNumber(0)
+      mInitCheck(NO_ERROR), mId(getUniqueId())
 {
     width  =
     height =
@@ -100,8 +100,7 @@ GraphicBuffer::GraphicBuffer(uint32_t inWidth, uint32_t inHeight,
 GraphicBuffer::GraphicBuffer(ANativeWindowBuffer* buffer, bool keepOwnership)
     : BASE(), mOwner(keepOwnership ? ownHandle : ownNone),
       mBufferMapper(GraphicBufferMapper::get()),
-      mInitCheck(NO_ERROR), mId(getUniqueId()),
-      mGenerationNumber(0)
+      mInitCheck(NO_ERROR), mId(getUniqueId())
 {
     width  = buffer->width;
     height = buffer->height;
