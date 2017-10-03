@@ -73,7 +73,7 @@ class IonBuffer {
   uint32_t width() const { return buffer_.get() ? buffer_->getWidth() : 0; }
   uint32_t height() const { return buffer_.get() ? buffer_->getHeight() : 0; }
   uint32_t layer_count() const {
-    return buffer_.get() ? buffer_->getLayerCount() : 0;
+    return buffer_.get() ? 1 : 0;
   }
   uint32_t stride() const { return buffer_.get() ? buffer_->getStride() : 0; }
   uint32_t format() const {

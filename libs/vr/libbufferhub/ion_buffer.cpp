@@ -78,7 +78,7 @@ int IonBuffer::Alloc(uint32_t width, uint32_t height, uint32_t layer_count,
            "usage=%" PRIx64, width, height, layer_count, format, usage);
 
   sp<GraphicBuffer> buffer =
-      new GraphicBuffer(width, height, format, layer_count, usage);
+      new GraphicBuffer(width, height, format, usage);
   if (buffer->initCheck() != OK) {
     ALOGE("IonBuffer::Aloc: Failed to allocate buffer");
     return -EINVAL;
@@ -107,9 +107,9 @@ int IonBuffer::Import(buffer_handle_t handle, uint32_t width, uint32_t height,
            "stride=%u format=%u usage=%" PRIx64,
            handle, width, height, layer_count, stride, format, usage);
   FreeHandle();
+
   sp<GraphicBuffer> buffer =
-      new GraphicBuffer(handle, GraphicBuffer::TAKE_UNREGISTERED_HANDLE, width,
-                        height, format, layer_count, usage, stride);
+      new GraphicBuffer(width, height, format, usage/*, stride, handle, true*/);
   if (buffer->initCheck() != OK) {
     ALOGE("IonBuffer::Import: Failed to import buffer");
     return -EINVAL;
