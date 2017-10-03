@@ -507,14 +507,14 @@ status_t BufferQueueProducer::dequeueBuffer(int *outSlot,
         { // Autolock scope
             Mutex::Autolock lock(mCore->mMutex);
 
-            if (error == NO_ERROR && !mCore->mIsAbandoned) {
+            if (graphicBuffer != NULL && !mCore->mIsAbandoned) {
                 mSlots[*outSlot].mGraphicBuffer = graphicBuffer;
             }
 
             mCore->mIsAllocating = false;
             mCore->mIsAllocatingCondition.broadcast();
 
-            if (error != NO_ERROR) {
+            if (graphicBuffer == NULL) {
                 mCore->mFreeSlots.insert(*outSlot);
                 mCore->clearBufferSlotLocked(*outSlot);
                 BQ_LOGE("dequeueBuffer: createGraphicBuffer failed");
