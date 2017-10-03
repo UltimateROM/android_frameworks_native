@@ -34,6 +34,7 @@
 #include <gui/BufferQueueProducer.h>
 #include <gui/GLConsumer.h>
 #include <gui/IConsumerListener.h>
+#include <gui/IGraphicBufferAlloc.h>
 #include <gui/IProducerListener.h>
 
 #include <utils/Log.h>
@@ -498,12 +499,10 @@ status_t BufferQueueProducer::dequeueBuffer(int* outSlot, sp<android::Fence>* ou
     } // Autolock scope
 
     if (returnFlags & BUFFER_NEEDS_REALLOCATION) {
+        status_t error;
         BQ_LOGV("dequeueBuffer: allocating a new buffer for slot %d", *outSlot);
-        sp<GraphicBuffer> graphicBuffer = new GraphicBuffer(
-                width, height, format, usage);
-
-        status_t error = graphicBuffer->initCheck();
-
+        sp<GraphicBuffer> graphicBuffer(mCore->mAllocator->createGraphicBuffer(
+                width, height, format, usage, &error));
         { // Autolock scope
             Mutex::Autolock lock(mCore->mMutex);
 
@@ -1342,11 +1341,9 @@ void BufferQueueProducer::allocateBuffers(uint32_t width, uint32_t height,
 
         Vector<sp<GraphicBuffer>> buffers;
         for (size_t i = 0; i <  newBufferCount; ++i) {
-            sp<GraphicBuffer> graphicBuffer = new GraphicBuffer(
-                    allocWidth, allocHeight, allocFormat, allocUsage);
-
-            status_t result = graphicBuffer->initCheck();
-
+            status_t result = NO_ERROR;
+            sp<GraphicBuffer> graphicBuffer(mCore->mAllocator->createGraphicBuffer(
+                    allocWidth, allocHeight, allocFormat, allocUsage, &result));
             if (result != NO_ERROR) {
                 BQ_LOGE("allocateBuffers: failed to allocate buffer (%u x %u, format"
                         " %u, usage %#" PRIx64 ")", width, height, format, usage);
