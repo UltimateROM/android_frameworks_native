@@ -120,12 +120,12 @@ DisplayDevice::DisplayDevice(
 {
     // clang-format on
     Surface* surface;
-//#ifdef STE_HARDWARE
-//    ANativeWindow* const window = new FramebufferNativeWindow();
-//#else
+#ifdef STE_HARDWARE
+    ANativeWindow* const window = new FramebufferNativeWindow();
+#else
     mNativeWindow = surface = new Surface(producer, false);
     ANativeWindow* const window = mNativeWindow.get();
-//#endif
+#endif
 
 #ifdef USE_HWC2
     mActiveColorMode = HAL_COLOR_MODE_NATIVE;
@@ -197,11 +197,11 @@ DisplayDevice::DisplayDevice(
     // initialize the display orientation transform.
     setProjection(DisplayState::eOrientationDefault, mViewport, mFrame);
 
-//#ifndef STE_HARDWARE
+#ifndef STE_HARDWARE
     if (useTripleFramebuffer) {
         surface->allocateBuffers();
     }
-//#endif
+#endif
 }
 
 DisplayDevice::~DisplayDevice() {
@@ -532,12 +532,12 @@ void DisplayDevice::setDisplaySize(const int newWidth, const int newHeight) {
 
     mDisplaySurface->resizeBuffers(newWidth, newHeight);
 
-//#ifdef STE_HARDWARE
-//    ANativeWindow* const window = new FramebufferNativeWindow();
-//#else
+#ifdef STE_HARDWARE
+    ANativeWindow* const window = new FramebufferNativeWindow();
+#else
     mNativeWindow = new Surface(producer, false);
     ANativeWindow* const window = mNativeWindow.get();
-//#endif
+#endif
     mSurface = eglCreateWindowSurface(mDisplay, mConfig, window, NULL);
     eglQuerySurface(mDisplay, mSurface, EGL_WIDTH,  &mDisplayWidth);
     eglQuerySurface(mDisplay, mSurface, EGL_HEIGHT, &mDisplayHeight);
