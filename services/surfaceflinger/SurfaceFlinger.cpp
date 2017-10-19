@@ -710,9 +710,7 @@ status_t SurfaceFlinger::getDisplayConfigs(const sp<IBinder>& display,
         }
         info.fps = float(1e9 / hwConfig.refresh);
         info.appVsyncOffset = VSYNC_EVENT_PHASE_OFFSET_NS;
-#ifndef TARGET_NEEDS_HWC_V0
         info.colorTransform = hwConfig.colorTransform;
-#endif
 
         // This is how far in advance a buffer must be queued for
         // presentation at a given time.  If you want a buffer to appear
@@ -1306,10 +1304,8 @@ void SurfaceFlinger::setUpHWComposer() {
                 for (size_t i=0 ; cur!=end && i<count ; ++i, ++cur) {
                     const sp<Layer>& layer(currentLayers[i]);
                     if (layer->isPotentialCursor()) {
-#ifndef TARGET_NEEDS_HWC_V0
                         cur->setIsCursorLayerHint();
                         break;
-#endif
                     }
                 }
             }
