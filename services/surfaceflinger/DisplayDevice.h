@@ -216,9 +216,7 @@ private:
     wp<IBinder> mDisplayToken;
 
     // ANativeWindow this display is rendering into
-#ifndef STE_HARDWARE
     sp<ANativeWindow> mNativeWindow;
-#endif
     sp<DisplaySurface> mDisplaySurface;
 
     EGLConfig       mConfig;
