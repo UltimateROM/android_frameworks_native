@@ -38,6 +38,9 @@ protected:
     size_t getSize() const { return mSize; }
     ssize_t getOffset() const { return mOffset; }
     const sp<IMemoryHeap>& getHeap() const { return mHeap; }
+#if defined(__ANDROID__)
+    virtual sp<IMemoryHeap> getMemory(long* offset, unsigned int* size) const;
+#endif
 
 private:
     size_t          mSize;

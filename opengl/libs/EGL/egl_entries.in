@@ -84,8 +84,10 @@ EGL_ENTRY(EGLClientBuffer, eglCreateNativeClientBufferANDROID, const EGLint *)
 
 /* NVIDIA extensions */
 
+#if !defined(__ANDROID__)
 EGL_ENTRY(EGLuint64NV, eglGetSystemTimeFrequencyNV, void)
 EGL_ENTRY(EGLuint64NV, eglGetSystemTimeNV, void)
+#endif
 
 /* IMG extensions */
 

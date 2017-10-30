@@ -216,7 +216,9 @@ private:
     wp<IBinder> mDisplayToken;
 
     // ANativeWindow this display is rendering into
+#if !defined(__ANDROID__)
     sp<ANativeWindow> mNativeWindow;
+#endif
     sp<DisplaySurface> mDisplaySurface;
 
     EGLConfig       mConfig;

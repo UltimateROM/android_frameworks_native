@@ -33,8 +33,13 @@ namespace android {
 class Fence;
 class GraphicBuffer;
 
+#if !defined(__ANDROID__)
 class BufferItem : public Flattenable<BufferItem> {
     friend class Flattenable<BufferItem>;
+#else
+class BufferItem : public Flattenable {
+    friend class Flattenable;
+#endif
     size_t getPodSize() const;
     size_t getFlattenedSize() const;
     size_t getFdCount() const;

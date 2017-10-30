@@ -38,7 +38,11 @@ namespace android {
 // ===========================================================================
 
 class Fence
+#if defined(__ANDROID__)
+    : public LightRefBase<Fence>, public Flattenable
+#else
     : public LightRefBase<Fence>, public Flattenable<Fence>
+#endif
 {
 public:
     static const sp<Fence> NO_FENCE;

@@ -38,10 +38,18 @@ class GraphicBufferMapper;
 // ===========================================================================
 
 class GraphicBuffer
-    : public ANativeObjectBase< ANativeWindowBuffer, GraphicBuffer, RefBase >,
+    : public ANativeObjectBase< ANativeWindowBuffer, GraphicBuffer,
+#if defined(__ANDROID__)
+    LightRefBase<GraphicBuffer> >,
+      public Flattenable
+#else
+    RefBase >,
       public Flattenable<GraphicBuffer>
+#endif
 {
+#if !defined(__ANDROID__)
     friend class Flattenable<GraphicBuffer>;
+#endif
 public:
 
     enum {
