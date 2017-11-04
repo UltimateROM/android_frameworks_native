@@ -31,10 +31,10 @@
 
 #include <binder/BinderService.h>
 
-#include <sensor/Sensor.h>
-#include <sensor/BitTube.h>
-#include <sensor/ISensorServer.h>
-#include <sensor/ISensorEventConnection.h>
+#include <gui/Sensor.h>
+#include <gui/BitTube.h>
+#include <gui/ISensorServer.h>
+#include <gui/ISensorEventConnection.h>
 
 #include "SensorService.h"
 
@@ -74,8 +74,6 @@ private:
                                    nsecs_t maxBatchReportLatencyNs, int reservedFlags);
     virtual status_t setEventRate(int handle, nsecs_t samplingPeriodNs);
     virtual status_t flush();
-    virtual int32_t configureChannel(int handle, int rateLevel);
-
     // Count the number of flush complete events which are about to be dropped in the buffer.
     // Increment mPendingFlushEventsToSend in mSensorInfo. These flush complete events will be sent
     // separately before the next batch of events.
