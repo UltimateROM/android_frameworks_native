@@ -334,14 +334,5 @@ int SensorManager::configureDirectChannel(int channelNativeHandle, int sensorHan
     return ret;
 }
 
-int SensorManager::setOperationParameter(
-        int type, const Vector<float> &floats, const Vector<int32_t> &ints) {
-    Mutex::Autolock _l(mLock);
-    if (assertStateLocked() != NO_ERROR) {
-        return NO_INIT;
-    }
-    return mSensorServer->setOperationParameter(type, floats, ints);
-}
-
 // ----------------------------------------------------------------------------
 }; // namespace android
