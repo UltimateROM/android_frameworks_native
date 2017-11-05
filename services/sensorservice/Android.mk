@@ -34,14 +34,8 @@ LOCAL_SHARED_LIBRARIES := \
     libbinder \
     libsensor \
     libcrypto \
-    libbase \
-    libhidlbase \
-    libhidltransport \
-    libhwbinder \
-    android.hardware.sensors@1.0
+    libbase
 
-LOCAL_STATIC_LIBRARIES := \
-    android.hardware.sensors@1.0-convert
 
 # our public headers depend on libsensor
 LOCAL_EXPORT_SHARED_LIBRARY_HEADERS := \
