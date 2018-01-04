@@ -19,7 +19,7 @@
 
 #include "SensorServiceUtils.h"
 
-#include <sensor/Sensor.h>
+#include <gui/Sensor.h>
 #include <utils/KeyedVector.h>
 #include <utils/Singleton.h>
 #include <utils/String8.h>

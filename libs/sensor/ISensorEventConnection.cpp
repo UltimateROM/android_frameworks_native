@@ -35,7 +35,8 @@ enum {
     GET_SENSOR_CHANNEL = IBinder::FIRST_CALL_TRANSACTION,
     ENABLE_DISABLE,
     SET_EVENT_RATE,
-    FLUSH_SENSOR
+    FLUSH_SENSOR,
+    CONFIGURE_CHANNEL
 };
 
 class BpSensorEventConnection : public BpInterface<ISensorEventConnection>
@@ -86,6 +87,15 @@ public:
         remote()->transact(FLUSH_SENSOR, data, &reply);
         return reply.readInt32();
     }
+
+    virtual int32_t configureChannel(int32_t handle, int32_t rateLevel) {
+        Parcel data, reply;
+        data.writeInterfaceToken(ISensorEventConnection::getInterfaceDescriptor());
+        data.writeInt32(handle);
+        data.writeInt32(rateLevel);
+        remote()->transact(CONFIGURE_CHANNEL, data, &reply);
+        return reply.readInt32();
+    }
 };
 
 // Out-of-line virtual method definition to trigger vtable emission in this
@@ -132,6 +142,15 @@ status_t BnSensorEventConnection::onTransact(
             reply->writeInt32(result);
             return NO_ERROR;
         }
+        case CONFIGURE_CHANNEL: {
+            CHECK_INTERFACE(ISensorEventConnection, data, reply);
+            int handle = data.readInt32();
+            int rateLevel = data.readInt32();
+            status_t result = configureChannel(handle, rateLevel);
+            reply->writeInt32(result);
+            return NO_ERROR;
+        }
+
     }
     return BBinder::onTransact(code, data, reply, flags);
 }

@@ -298,7 +298,15 @@ Sensor::Sensor(struct sensor_t const& hwSensor, const uuid_t& uuid, int halVersi
     // Feature flags
     // Set DYNAMIC_SENSOR_MASK and ADDITIONAL_INFO_MASK flag here. Compatible with HAL 1_3.
     if (halVersion >= SENSORS_DEVICE_API_VERSION_1_3) {
-        mFlags |= (hwSensor.flags & (DYNAMIC_SENSOR_MASK | ADDITIONAL_INFO_MASK));
+        mFlags |= hwSensor.flags & (DYNAMIC_SENSOR_MASK | ADDITIONAL_INFO_MASK);
+    }
+    // Set DIRECT_REPORT_MASK and DIRECT_CHANNEL_MASK flags. Compatible with HAL 1_3.
+    if (halVersion >= SENSORS_DEVICE_API_VERSION_1_3) {
+        // only on continuous sensors direct report mode is defined
+        if ((mFlags & REPORTING_MODE_MASK) == SENSOR_FLAG_CONTINUOUS_MODE) {
+            mFlags |= hwSensor.flags
+                & (SENSOR_FLAG_MASK_DIRECT_REPORT | SENSOR_FLAG_MASK_DIRECT_CHANNEL);
+        }
     }
     // Set DATA_INJECTION flag here. Defined in HAL 1_4.
     if (halVersion >= SENSORS_DEVICE_API_VERSION_1_4) {
@@ -406,6 +414,21 @@ bool Sensor::isDynamicSensor() const {
 
 bool Sensor::hasAdditionalInfo() const {
     return (mFlags & SENSOR_FLAG_ADDITIONAL_INFO) != 0;
+}
+
+int32_t Sensor::getHighestDirectReportRateLevel() const {
+    return ((mFlags & SENSOR_FLAG_MASK_DIRECT_REPORT) >> SENSOR_FLAG_SHIFT_DIRECT_REPORT);
+}
+
+bool Sensor::isDirectChannelTypeSupported(int32_t sharedMemType) const {
+    switch (sharedMemType) {
+        case SENSOR_DIRECT_MEM_TYPE_ASHMEM:
+            return mFlags & SENSOR_FLAG_DIRECT_CHANNEL_ASHMEM;
+        case SENSOR_DIRECT_MEM_TYPE_GRALLOC:
+            return mFlags & SENSOR_FLAG_DIRECT_CHANNEL_GRALLOC;
+        default:
+            return false;
+    }
 }
 
 int32_t Sensor::getReportingMode() const {
@@ -553,24 +576,3 @@ bool Sensor::unflattenString8(void const*& buffer, size_t& size, String8& output
 
 // ----------------------------------------------------------------------------
 }; // namespace android
-
-extern "C" void _ZN7android13SensorManager19createDirectChannelEjiPK13native_handle(unsigned int, int, native_handle const*)
-{
-}
-
-extern "C" void _ZN7android13SensorManager20destroyDirectChannelEi(int)
-{
-}
-
-extern "C" void _ZN7android13SensorManager22configureDirectChannelEiii(int, int, int)
-{
-}
-
-extern "C" void _ZN7android13SensorManager21setOperationParameterEiRKNS_6VectorIfEERKNS1_IiEE(int, android::Vector<float> const&, android::Vector<int> const&)
-{
-}
-
-extern "C" bool _ZNK7android6Sensor28isDirectChannelTypeSupportedEi(int)
-{
-	return false;
-}
