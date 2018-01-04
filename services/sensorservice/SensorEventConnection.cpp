@@ -17,11 +17,13 @@
 #include <sys/socket.h>
 #include <utils/threads.h>
 
-#include <gui/SensorEventQueue.h>
+#include <sensor/SensorEventQueue.h>
 
 #include "vec.h"
 #include "SensorEventConnection.h"
 #include "SensorDevice.h"
+
+#define UNUSED(x) (void)(x)
 
 namespace android {
 
@@ -522,6 +524,13 @@ status_t SensorService::SensorEventConnection::setEventRate(
 
 status_t  SensorService::SensorEventConnection::flush() {
     return  mService->flushSensor(this, mOpPackageName);
+}
+
+int32_t SensorService::SensorEventConnection::configureChannel(int handle, int rateLevel) {
+    // SensorEventConnection does not support configureChannel, parameters not used
+    UNUSED(handle);
+    UNUSED(rateLevel);
+    return INVALID_OPERATION;
 }
 
 int SensorService::SensorEventConnection::handleEvent(int fd, int events, void* /*data*/) {
