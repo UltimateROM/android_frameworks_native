@@ -33,7 +33,7 @@
 
 #ifdef STE_HARDWARE
 #include <hardware/copybit.h>
-#include <gui/IGraphicBufferAlloc.h>
+//#include <gui/IGraphicBufferAlloc.h>
 #endif
 
 namespace android {
