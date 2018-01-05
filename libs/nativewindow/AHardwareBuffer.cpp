@@ -62,7 +62,8 @@ int AHardwareBuffer_allocate(const AHardwareBuffer_Desc* desc, AHardwareBuffer**
 
     uint64_t usage =  AHardwareBuffer_convertToGrallocUsageBits(desc->usage);
     sp<GraphicBuffer> gbuffer(new GraphicBuffer(
-            desc->width, desc->height, format, usage));
+            desc->width, desc->height, format, desc->layers, usage,
+            std::string("AHardwareBuffer pid [") + std::to_string(getpid()) + "]"));
 
     status_t err = gbuffer->initCheck();
     if (err != 0 || gbuffer->handle == 0) {
@@ -99,7 +100,7 @@ void AHardwareBuffer_describe(const AHardwareBuffer* buffer,
 
     outDesc->width = gbuffer->getWidth();
     outDesc->height = gbuffer->getHeight();
-    outDesc->layers = 1;
+    outDesc->layers = gbuffer->getLayerCount();
     outDesc->format = AHardwareBuffer_convertFromPixelFormat(uint32_t(gbuffer->getPixelFormat()));
     outDesc->usage = AHardwareBuffer_convertFromGrallocUsageBits(gbuffer->getUsage());
     outDesc->stride = gbuffer->getStride();
