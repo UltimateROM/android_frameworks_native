@@ -15,7 +15,7 @@
  */
 
 #define ATRACE_TAG ATRACE_TAG_GRAPHICS
-#define WORKAROUND_BUG_10194508
+#define WORKAROUND_BUG_10194508 1
 
 #include <ctype.h>
 #include <dlfcn.h>
@@ -618,7 +618,7 @@ void getNativePixelFormat(EGLDisplay dpy, egl_connection_t* cnx, EGLConfig confi
     EGLint componentType = EGL_COLOR_COMPONENT_TYPE_FIXED_EXT;
     cnx->egl.eglGetConfigAttrib(dpy, config, EGL_COLOR_COMPONENT_TYPE_EXT, &componentType);
 
-#if WORKAROUND_BUG_10194508
+#ifdef WORKAROUND_BUG_10194508
     if (!cnx->egl.eglGetConfigAttrib(dpy, config, EGL_NATIVE_VISUAL_ID,
             &format)) {
         ALOGE("eglGetConfigAttrib(EGL_NATIVE_VISUAL_ID) failed: %#x",
