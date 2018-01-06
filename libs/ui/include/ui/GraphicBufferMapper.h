@@ -40,7 +40,6 @@ class Rect;
 class GraphicBufferMapper : public Singleton<GraphicBufferMapper>
 {
 public:
-    static void preloadHal();
     static inline GraphicBufferMapper& get() { return getInstance(); }
 
     // The imported outHandle must be freed with freeBuffer when no longer
