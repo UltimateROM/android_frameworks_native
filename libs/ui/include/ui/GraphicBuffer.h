@@ -28,9 +28,9 @@
 #include <utils/Flattenable.h>
 #include <utils/RefBase.h>
 
-#include <hardware/gralloc.h>
+#include <nativebase/nativebase.h>
 
-struct ANativeWindowBuffer;
+#include <hardware/gralloc.h>
 
 namespace android {
 
@@ -82,16 +82,70 @@ public:
 
     static sp<GraphicBuffer> from(ANativeWindowBuffer *);
 
+
+    // Create a GraphicBuffer to be unflatten'ed into or be reallocated.
     GraphicBuffer();
 
-    // creates w * h buffer
+    // Create a GraphicBuffer by allocating and managing a buffer internally.
+    // This function is privileged.  See reallocate for details.
     GraphicBuffer(uint32_t inWidth, uint32_t inHeight, PixelFormat inFormat,
-            uint32_t inUsage);
+            uint32_t inLayerCount, uint64_t inUsage,
+            std::string requestorName = "<Unknown>");
 
-    // create a buffer from an existing handle
     GraphicBuffer(uint32_t inWidth, uint32_t inHeight, PixelFormat inFormat,
             uint32_t inUsage, uint32_t inStride, native_handle_t* inHandle,
             bool keepOwnership);
+
+    // Create a GraphicBuffer from an existing handle.
+    enum HandleWrapMethod : uint8_t {
+        // Wrap and use the handle directly.  It assumes the handle has been
+        // registered and never fails.  The handle must have a longer lifetime
+        // than this wrapping GraphicBuffer.
+        //
+        // This can be used when, for example, you want to wrap a handle that
+        // is already managed by another GraphicBuffer.
+        WRAP_HANDLE,
+
+        // Take ownership of the handle and use it directly.  It assumes the
+        // handle has been registered and never fails.
+        //
+        // This can be used to manage an already registered handle with
+        // GraphicBuffer.
+        TAKE_HANDLE,
+
+        // Take onwership of an unregistered handle and use it directly.  It
+        // can fail when the buffer does not register.  There is no ownership
+        // transfer on failures.
+        //
+        // This can be used to, for example, create a GraphicBuffer from a
+        // handle returned by Parcel::readNativeHandle.
+        TAKE_UNREGISTERED_HANDLE,
+
+        // Make a clone of the handle and use the cloned handle.  It can fail
+        // when cloning fails or when the buffer does not register.  There is
+        // never ownership transfer.
+        //
+        // This can be used to create a GraphicBuffer from a handle that
+        // cannot be used directly, such as one from hidl_handle.
+        CLONE_HANDLE,
+    };
+    GraphicBuffer(const native_handle_t* handle, HandleWrapMethod method,
+            uint32_t width, uint32_t height,
+            PixelFormat format, uint32_t layerCount,
+            uint64_t usage, uint32_t stride);
+
+    // These functions are deprecated because they only take 32 bits of usage
+    GraphicBuffer(const native_handle_t* handle, HandleWrapMethod method,
+            uint32_t width, uint32_t height,
+            PixelFormat format, uint32_t layerCount,
+            uint32_t usage, uint32_t stride)
+        : GraphicBuffer(handle, method, width, height, format, layerCount,
+                static_cast<uint64_t>(usage), stride) {}
+    GraphicBuffer(uint32_t inWidth, uint32_t inHeight, PixelFormat inFormat,
+            uint32_t inLayerCount, uint32_t inUsage, uint32_t inStride,
+            native_handle_t* inHandle, bool keepOwnership);
+    GraphicBuffer(uint32_t inWidth, uint32_t inHeight, PixelFormat inFormat,
+            uint32_t inUsage, std::string requestorName = "<Unknown>");
 
     // create a buffer from an existing ANativeWindowBuffer
     GraphicBuffer(ANativeWindowBuffer* buffer, bool keepOwnership);
@@ -102,8 +156,9 @@ public:
     uint32_t getWidth() const           { return static_cast<uint32_t>(width); }
     uint32_t getHeight() const          { return static_cast<uint32_t>(height); }
     uint32_t getStride() const          { return static_cast<uint32_t>(stride); }
-    uint32_t getUsage() const           { return static_cast<uint32_t>(usage); }
+    uint64_t getUsage() const           { return usage; }
     PixelFormat getPixelFormat() const  { return format; }
+    uint32_t getLayerCount() const      { return static_cast<uint32_t>(layerCount); }
     Rect getBounds() const              { return Rect(width, height); }
     uint64_t getId() const              { return mId; }
 
@@ -112,11 +167,14 @@ public:
         mGenerationNumber = generation;
     }
 
+    // This function is privileged.  It requires access to the allocator
+    // device or service, which usually involves adding suitable selinux
+    // rules.
     status_t reallocate(uint32_t inWidth, uint32_t inHeight,
-            PixelFormat inFormat, uint32_t inUsage);
+            PixelFormat inFormat, uint32_t inLayerCount, uint64_t inUsage);
 
     bool needsReallocation(uint32_t inWidth, uint32_t inHeight,
-            PixelFormat inFormat, uint32_t inUsage);
+            PixelFormat inFormat, uint32_t inLayerCount, uint64_t inUsage);
 
     status_t lock(uint32_t inUsage, void** vaddr);
     status_t lock(uint32_t inUsage, const Rect& rect, void** vaddr);
@@ -128,6 +186,10 @@ public:
     status_t lockAsync(uint32_t inUsage, void** vaddr, int fenceFd);
     status_t lockAsync(uint32_t inUsage, const Rect& rect, void** vaddr,
             int fenceFd);
+/*
+    status_t lockAsync(uint64_t inProducerUsage, uint64_t inConsumerUsage,
+            const Rect& rect, void** vaddr, int fenceFd);
+*/
     status_t lockAsyncYCbCr(uint32_t inUsage, android_ycbcr *ycbcr,
             int fenceFd);
     status_t lockAsyncYCbCr(uint32_t inUsage, const Rect& rect,
@@ -171,17 +233,19 @@ private:
     GraphicBuffer& operator = (const GraphicBuffer& rhs);
     const GraphicBuffer& operator = (const GraphicBuffer& rhs) const;
 
-    status_t initSize(uint32_t inWidth, uint32_t inHeight, PixelFormat inFormat,
+    status_t initWithSize(uint32_t inWidth, uint32_t inHeight,
+            PixelFormat inFormat, uint32_t inLayerCount,
             uint32_t inUsage);
+
+    status_t initWithHandle(const native_handle_t* handle,
+            HandleWrapMethod method, uint32_t width, uint32_t height,
+            PixelFormat format, uint32_t layerCount,
+            uint64_t usage, uint32_t stride);
 
     void free_handle();
 
     GraphicBufferMapper& mBufferMapper;
     ssize_t mInitCheck;
-
-    // If we're wrapping another buffer then this reference will make sure it
-    // doesn't get freed.
-    sp<ANativeWindowBuffer> mWrappedBuffer;
 
     uint64_t mId;
 

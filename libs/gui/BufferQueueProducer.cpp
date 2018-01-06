@@ -419,7 +419,7 @@ status_t BufferQueueProducer::dequeueBuffer(int* outSlot, sp<android::Fence>* ou
             // buffer. If this buffer would require reallocation to meet the
             // requested attributes, we free it and attempt to get another one.
             if (!mCore->mAllowAllocation) {
-                if (buffer->needsReallocation(width, height, format, usage)) {
+                if (buffer->needsReallocation(width, height, format, BQ_LAYER_COUNT, usage)) {
                     if (mCore->mSharedBufferSlot == found) {
                         BQ_LOGE("dequeueBuffer: cannot re-allocate a sharedbuffer");
                         return BAD_VALUE;
@@ -434,7 +434,7 @@ status_t BufferQueueProducer::dequeueBuffer(int* outSlot, sp<android::Fence>* ou
 
         const sp<GraphicBuffer>& buffer(mSlots[found].mGraphicBuffer);
         if (mCore->mSharedBufferSlot == found &&
-                buffer->needsReallocation(width, height, format, usage)) {
+                buffer->needsReallocation(width, height, format, BQ_LAYER_COUNT, usage)) {
             BQ_LOGE("dequeueBuffer: cannot re-allocate a shared"
                     "buffer");
 
@@ -453,7 +453,7 @@ status_t BufferQueueProducer::dequeueBuffer(int* outSlot, sp<android::Fence>* ou
         mSlots[found].mBufferState.dequeue();
 
         if ((buffer == NULL) ||
-                buffer->needsReallocation(width, height, format, usage))
+                buffer->needsReallocation(width, height, format, BQ_LAYER_COUNT, usage))
         {
             mSlots[found].mAcquireCalled = false;
             mSlots[found].mGraphicBuffer = NULL;
@@ -502,7 +502,8 @@ status_t BufferQueueProducer::dequeueBuffer(int* outSlot, sp<android::Fence>* ou
     if (returnFlags & BUFFER_NEEDS_REALLOCATION) {
         BQ_LOGV("dequeueBuffer: allocating a new buffer for slot %d", *outSlot);
         sp<GraphicBuffer> graphicBuffer = new GraphicBuffer(
-                width, height, format, usage);
+                width, height, format, BQ_LAYER_COUNT, usage,
+                {mConsumerName.string(), mConsumerName.size()});
 
         status_t error = graphicBuffer->initCheck();
 
@@ -1354,7 +1355,8 @@ void BufferQueueProducer::allocateBuffers(uint32_t width, uint32_t height,
         Vector<sp<GraphicBuffer>> buffers;
         for (size_t i = 0; i <  newBufferCount; ++i) {
             sp<GraphicBuffer> graphicBuffer = new GraphicBuffer(
-                    allocWidth, allocHeight, allocFormat, allocUsage);
+                    allocWidth, allocHeight, allocFormat, BQ_LAYER_COUNT,
+                    allocUsage, {mConsumerName.string(), mConsumerName.size()});
 
             status_t result = graphicBuffer->initCheck();
 

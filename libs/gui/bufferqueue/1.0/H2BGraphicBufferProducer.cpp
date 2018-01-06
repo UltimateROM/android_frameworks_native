@@ -126,7 +126,7 @@ inline void wrapAs(AnwBuffer* t, GraphicBuffer const& l) {
     t->attr.height = l.getHeight();
     t->attr.stride = l.getStride();
     t->attr.format = static_cast<PixelFormat>(l.getPixelFormat());
-    t->attr.layerCount = 1;
+    t->attr.layerCount = l.getLayerCount();
     t->attr.usage = uint32_t(l.getUsage());     // FIXME: need 64-bits usage version
     t->attr.id = l.getId();
     t->attr.generationNumber = l.getGenerationNumber();
