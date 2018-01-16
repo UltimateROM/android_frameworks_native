@@ -29,7 +29,8 @@ cc_library_shared {
         "-Wall",
         "-Werror",
         "-Wextra",
-        "-fvisibility=hidden"
+        "-fvisibility=hidden",
+        "-DHARDWARE_FIFO_SENSOR_SERVICE",
     ],
 
     shared_libs: [
