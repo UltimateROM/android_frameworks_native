@@ -455,7 +455,6 @@ void DisplayDevice::setDisplaySize(const int newWidth, const int newHeight) {
 #ifdef STE_HARDWARE
     ANativeWindow* const window = new FramebufferNativeWindow();
 #else
-    mNativeWindow = new Surface(producer, false);
     ANativeWindow* const window = mNativeWindow.get();
 #endif
     mSurface = eglCreateWindowSurface(mDisplay, mConfig, window, NULL);
